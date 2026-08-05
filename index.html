@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Анализ единичных повреждений</title>
+<script id="offline-engine">
+/* ==========================================================================
+   Автономный движок чтения/записи .xlsx и записи .pptx — без CDN и внешних
+   библиотек. Работает полностью офлайн после однократной загрузки страницы.
+   Использует только встроенные возможности браузера (DecompressionStream
+   для распаковки deflate внутри загружаемых .xlsx — это часть платформы
+   браузера, а не сторонняя библиотека).
+   ========================================================================== */
+"use strict";
+/* ---- statics.js ---- */
+
+const THEME1_XML = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<a:theme xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" name=\"Office Theme\"><a:themeElements><a:clrScheme name=\"Office\"><a:dk1><a:sysClr val=\"windowText\" lastClr=\"000000\"/></a:dk1><a:lt1><a:sysClr val=\"window\" lastClr=\"FFFFFF\"/></a:lt1><a:dk2><a:srgbClr val=\"1F497D\"/></a:dk2><a:lt2><a:srgbClr val=\"EEECE1\"/></a:lt2><a:accent1><a:srgbClr val=\"4F81BD\"/></a:accent1><a:accent2><a:srgbClr val=\"C0504D\"/></a:accent2><a:accent3><a:srgbClr val=\"9BBB59\"/></a:accent3><a:accent4><a:srgbClr val=\"8064A2\"/></a:accent4><a:accent5><a:srgbClr val=\"4BACC6\"/></a:accent5><a:accent6><a:srgbClr val=\"F79646\"/></a:accent6><a:hlink><a:srgbClr val=\"0000FF\"/></a:hlink><a:folHlink><a:srgbClr val=\"800080\"/></a:folHlink></a:clrScheme><a:fontScheme name=\"Office\"><a:majorFont><a:latin typeface=\"Calibri\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/><a:font script=\"Jpan\" typeface=\"ＭＳ Ｐゴシック\"/><a:font script=\"Hang\" typeface=\"맑은 고딕\"/><a:font script=\"Hans\" typeface=\"宋体\"/><a:font script=\"Hant\" typeface=\"新細明體\"/><a:font script=\"Arab\" typeface=\"Times New Roman\"/><a:font script=\"Hebr\" typeface=\"Times New Roman\"/><a:font script=\"Thai\" typeface=\"Angsana New\"/><a:font script=\"Ethi\" typeface=\"Nyala\"/><a:font script=\"Beng\" typeface=\"Vrinda\"/><a:font script=\"Gujr\" typeface=\"Shruti\"/><a:font script=\"Khmr\" typeface=\"MoolBoran\"/><a:font script=\"Knda\" typeface=\"Tunga\"/><a:font script=\"Guru\" typeface=\"Raavi\"/><a:font script=\"Cans\" typeface=\"Euphemia\"/><a:font script=\"Cher\" typeface=\"Plantagenet Cherokee\"/><a:font script=\"Yiii\" typeface=\"Microsoft Yi Baiti\"/><a:font script=\"Tibt\" typeface=\"Microsoft Himalaya\"/><a:font script=\"Thaa\" typeface=\"MV Boli\"/><a:font script=\"Deva\" typeface=\"Mangal\"/><a:font script=\"Telu\" typeface=\"Gautami\"/><a:font script=\"Taml\" typeface=\"Latha\"/><a:font script=\"Syrc\" typeface=\"Estrangelo Edessa\"/><a:font script=\"Orya\" typeface=\"Kalinga\"/><a:font script=\"Mlym\" typeface=\"Kartika\"/><a:font script=\"Laoo\" typeface=\"DokChampa\"/><a:font script=\"Sinh\" typeface=\"Iskoola Pota\"/><a:font script=\"Mong\" typeface=\"Mongolian Baiti\"/><a:font script=\"Viet\" typeface=\"Times New Roman\"/><a:font script=\"Uigh\" typeface=\"Microsoft Uighur\"/><a:font script=\"Geor\" typeface=\"Sylfaen\"/></a:majorFont><a:minorFont><a:latin typeface=\"Calibri\"/><a:ea typeface=\"\"/><a:cs typeface=\"\"/><a:font script=\"Jpan\" typeface=\"ＭＳ Ｐゴシック\"/><a:font script=\"Hang\" typeface=\"맑은 고딕\"/><a:font script=\"Hans\" typeface=\"宋体\"/><a:font script=\"Hant\" typeface=\"新細明體\"/><a:font script=\"Arab\" typeface=\"Arial\"/><a:font script=\"Hebr\" typeface=\"Arial\"/><a:font script=\"Thai\" typeface=\"Cordia New\"/><a:font script=\"Ethi\" typeface=\"Nyala\"/><a:font script=\"Beng\" typeface=\"Vrinda\"/><a:font script=\"Gujr\" typeface=\"Shruti\"/><a:font script=\"Khmr\" typeface=\"DaunPenh\"/><a:font script=\"Knda\" typeface=\"Tunga\"/><a:font script=\"Guru\" typeface=\"Raavi\"/><a:font script=\"Cans\" typeface=\"Euphemia\"/><a:font script=\"Cher\" typeface=\"Plantagenet Cherokee\"/><a:font script=\"Yiii\" typeface=\"Microsoft Yi Baiti\"/><a:font script=\"Tibt\" typeface=\"Microsoft Himalaya\"/><a:font script=\"Thaa\" typeface=\"MV Boli\"/><a:font script=\"Deva\" typeface=\"Mangal\"/><a:font script=\"Telu\" typeface=\"Gautami\"/><a:font script=\"Taml\" typeface=\"Latha\"/><a:font script=\"Syrc\" typeface=\"Estrangelo Edessa\"/><a:font script=\"Orya\" typeface=\"Kalinga\"/><a:font script=\"Mlym\" typeface=\"Kartika\"/><a:font script=\"Laoo\" typeface=\"DokChampa\"/><a:font script=\"Sinh\" typeface=\"Iskoola Pota\"/><a:font script=\"Mong\" typeface=\"Mongolian Baiti\"/><a:font script=\"Viet\" typeface=\"Arial\"/><a:font script=\"Uigh\" typeface=\"Microsoft Uighur\"/><a:font script=\"Geor\" typeface=\"Sylfaen\"/></a:minorFont></a:fontScheme><a:fmtScheme name=\"Office\"><a:fillStyleLst><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"50000\"/><a:satMod val=\"300000\"/></a:schemeClr></a:gs><a:gs pos=\"35000\"><a:schemeClr val=\"phClr\"><a:tint val=\"37000\"/><a:satMod val=\"300000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:tint val=\"15000\"/><a:satMod val=\"350000\"/></a:schemeClr></a:gs></a:gsLst><a:lin ang=\"16200000\" scaled=\"1\"/></a:gradFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"100000\"/><a:shade val=\"100000\"/><a:satMod val=\"130000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:tint val=\"50000\"/><a:shade val=\"100000\"/><a:satMod val=\"350000\"/></a:schemeClr></a:gs></a:gsLst><a:lin ang=\"16200000\" scaled=\"0\"/></a:gradFill></a:fillStyleLst><a:lnStyleLst><a:ln w=\"9525\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"><a:shade val=\"95000\"/><a:satMod val=\"105000\"/></a:schemeClr></a:solidFill><a:prstDash val=\"solid\"/></a:ln><a:ln w=\"25400\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:prstDash val=\"solid\"/></a:ln><a:ln w=\"38100\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:prstDash val=\"solid\"/></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"40000\" dist=\"20000\" dir=\"5400000\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"38000\"/></a:srgbClr></a:outerShdw></a:effectLst></a:effectStyle><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"40000\" dist=\"23000\" dir=\"5400000\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"35000\"/></a:srgbClr></a:outerShdw></a:effectLst></a:effectStyle><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"40000\" dist=\"23000\" dir=\"5400000\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"35000\"/></a:srgbClr></a:outerShdw></a:effectLst><a:scene3d><a:camera prst=\"orthographicFront\"><a:rot lat=\"0\" lon=\"0\" rev=\"0\"/></a:camera><a:lightRig rig=\"threePt\" dir=\"t\"><a:rot lat=\"0\" lon=\"0\" rev=\"1200000\"/></a:lightRig></a:scene3d><a:sp3d><a:bevelT w=\"63500\" h=\"25400\"/></a:sp3d></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"40000\"/><a:satMod val=\"350000\"/></a:schemeClr></a:gs><a:gs pos=\"40000\"><a:schemeClr val=\"phClr\"><a:tint val=\"45000\"/><a:shade val=\"99000\"/><a:satMod val=\"350000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"20000\"/><a:satMod val=\"255000\"/></a:schemeClr></a:gs></a:gsLst><a:path path=\"circle\"><a:fillToRect l=\"50000\" t=\"-80000\" r=\"50000\" b=\"180000\"/></a:path></a:gradFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"80000\"/><a:satMod val=\"300000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"30000\"/><a:satMod val=\"200000\"/></a:schemeClr></a:gs></a:gsLst><a:path path=\"circle\"><a:fillToRect l=\"50000\" t=\"50000\" r=\"50000\" b=\"50000\"/></a:path></a:gradFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements><a:objectDefaults><a:spDef><a:spPr/><a:bodyPr/><a:lstStyle/><a:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"3\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"2\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"lt1\"/></a:fontRef></a:style></a:spDef><a:lnDef><a:spPr/><a:bodyPr/><a:lstStyle/><a:style><a:lnRef idx=\"2\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></a:style></a:lnDef></a:objectDefaults><a:extraClrSchemeLst/></a:theme>";
+const NOTESMASTER1_XML = "<?xml version='1.0' encoding='UTF-8' standalone='yes'?>\n<p:notesMaster xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><p:cSld><p:bg><p:bgRef idx=\"1001\"><a:schemeClr val=\"bg1\"/></p:bgRef></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr><p:sp><p:nvSpPr><p:cNvPr id=\"2\" name=\"Header Placeholder 1\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"hdr\" sz=\"quarter\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"2971800\" cy=\"457200\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\"/><a:lstStyle><a:lvl1pPr algn=\"l\"><a:defRPr sz=\"1200\"/></a:lvl1pPr></a:lstStyle><a:p><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"3\" name=\"Date Placeholder 2\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"dt\" idx=\"1\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"3884613\" y=\"0\"/><a:ext cx=\"2971800\" cy=\"457200\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\"/><a:lstStyle><a:lvl1pPr algn=\"r\"><a:defRPr sz=\"1200\"/></a:lvl1pPr></a:lstStyle><a:p><a:fld id=\"{0F89C1C7-3DCD-1040-A9CF-14679D8B5DDD}\" type=\"datetimeFigureOut\"><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>10/17/16</a:t></a:fld><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"4\" name=\"Slide Image Placeholder 3\"/><p:cNvSpPr><a:spLocks noGrp=\"1\" noRot=\"1\" noChangeAspect=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"sldImg\" idx=\"2\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"1143000\" y=\"685800\"/><a:ext cx=\"4572000\" cy=\"3429000\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/><a:ln w=\"12700\"><a:solidFill><a:prstClr val=\"black\"/></a:solidFill></a:ln></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\" anchor=\"ctr\"/><a:lstStyle/><a:p><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"5\" name=\"Notes Placeholder 4\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"body\" sz=\"quarter\" idx=\"3\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"685800\" y=\"4343400\"/><a:ext cx=\"5486400\" cy=\"4114800\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\"/><a:lstStyle/><a:p><a:pPr lvl=\"0\"/><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Click to edit Master text styles</a:t></a:r></a:p><a:p><a:pPr lvl=\"1\"/><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Second level</a:t></a:r></a:p><a:p><a:pPr lvl=\"2\"/><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Third level</a:t></a:r></a:p><a:p><a:pPr lvl=\"3\"/><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Fourth level</a:t></a:r></a:p><a:p><a:pPr lvl=\"4\"/><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Fifth level</a:t></a:r><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"6\" name=\"Footer Placeholder 5\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"ftr\" sz=\"quarter\" idx=\"4\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"0\" y=\"8685213\"/><a:ext cx=\"2971800\" cy=\"457200\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\" anchor=\"b\"/><a:lstStyle><a:lvl1pPr algn=\"l\"><a:defRPr sz=\"1200\"/></a:lvl1pPr></a:lstStyle><a:p><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"7\" name=\"Slide Number Placeholder 6\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"sldNum\" sz=\"quarter\" idx=\"5\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"3884613\" y=\"8685213\"/><a:ext cx=\"2971800\" cy=\"457200\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\" anchor=\"b\"/><a:lstStyle><a:lvl1pPr algn=\"r\"><a:defRPr sz=\"1200\"/></a:lvl1pPr></a:lstStyle><a:p><a:fld id=\"{BB5E49A5-4136-284D-997B-48E1D791AD67}\" type=\"slidenum\"><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>‹#›</a:t></a:fld><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp></p:spTree><p:extLst><p:ext uri=\"{BB962C8B-B14F-4D97-AF65-F5344CB8AC3E}\"><p14:creationId xmlns:p14=\"http://schemas.microsoft.com/office/powerpoint/2010/main\" val=\"2623252185\"/></p:ext></p:extLst></p:cSld><p:clrMap bg1=\"lt1\" tx1=\"dk1\" bg2=\"lt2\" tx2=\"dk2\" accent1=\"accent1\" accent2=\"accent2\" accent3=\"accent3\" accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\" hlink=\"hlink\" folHlink=\"folHlink\"/><p:notesStyle><a:lvl1pPr marL=\"0\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1200\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl1pPr><a:lvl2pPr marL=\"457200\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1200\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl2pPr><a:lvl3pPr marL=\"914400\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1200\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl3pPr><a:lvl4pPr marL=\"1371600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1200\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl4pPr><a:lvl5pPr marL=\"1828800\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1200\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl5pPr><a:lvl6pPr marL=\"2286000\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1200\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl6pPr><a:lvl7pPr marL=\"2743200\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1200\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl7pPr><a:lvl8pPr marL=\"3200400\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1200\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl8pPr><a:lvl9pPr marL=\"3657600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1200\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl9pPr></p:notesStyle></p:notesMaster>";
+const SLIDEMASTER1_XML = "<?xml version='1.0' encoding='UTF-8' standalone='yes'?>\n<p:sldMaster xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"><p:cSld><p:bg><p:bgRef idx=\"1001\"><a:schemeClr val=\"bg1\"/></p:bgRef></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr><p:sp><p:nvSpPr><p:cNvPr id=\"2\" name=\"Title Placeholder 1\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"title\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"457200\" y=\"274638\"/><a:ext cx=\"8229600\" cy=\"1143000\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\" anchor=\"ctr\"><a:normAutofit/></a:bodyPr><a:lstStyle/><a:p><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Click to edit Master title style</a:t></a:r><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"3\" name=\"Text Placeholder 2\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"body\" idx=\"1\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"457200\" y=\"1600200\"/><a:ext cx=\"8229600\" cy=\"4525963\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\"><a:normAutofit/></a:bodyPr><a:lstStyle/><a:p><a:pPr lvl=\"0\"/><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Click to edit Master text styles</a:t></a:r></a:p><a:p><a:pPr lvl=\"1\"/><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Second level</a:t></a:r></a:p><a:p><a:pPr lvl=\"2\"/><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Third level</a:t></a:r></a:p><a:p><a:pPr lvl=\"3\"/><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Fourth level</a:t></a:r></a:p><a:p><a:pPr lvl=\"4\"/><a:r><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>Fifth level</a:t></a:r><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"4\" name=\"Date Placeholder 3\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"dt\" sz=\"half\" idx=\"2\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"457200\" y=\"6356350\"/><a:ext cx=\"2133600\" cy=\"365125\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\" anchor=\"ctr\"/><a:lstStyle><a:lvl1pPr algn=\"l\"><a:defRPr sz=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"><a:tint val=\"75000\"/></a:schemeClr></a:solidFill></a:defRPr></a:lvl1pPr></a:lstStyle><a:p><a:fld id=\"{5BCAD085-E8A6-8845-BD4E-CB4CCA059FC4}\" type=\"datetimeFigureOut\"><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>1/27/13</a:t></a:fld><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"5\" name=\"Footer Placeholder 4\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"ftr\" sz=\"quarter\" idx=\"3\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"3124200\" y=\"6356350\"/><a:ext cx=\"2895600\" cy=\"365125\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\" anchor=\"ctr\"/><a:lstStyle><a:lvl1pPr algn=\"ctr\"><a:defRPr sz=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"><a:tint val=\"75000\"/></a:schemeClr></a:solidFill></a:defRPr></a:lvl1pPr></a:lstStyle><a:p><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"6\" name=\"Slide Number Placeholder 5\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"sldNum\" sz=\"quarter\" idx=\"4\"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x=\"6553200\" y=\"6356350\"/><a:ext cx=\"2133600\" cy=\"365125\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr vert=\"horz\" lIns=\"91440\" tIns=\"45720\" rIns=\"91440\" bIns=\"45720\" rtlCol=\"0\" anchor=\"ctr\"/><a:lstStyle><a:lvl1pPr algn=\"r\"><a:defRPr sz=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"><a:tint val=\"75000\"/></a:schemeClr></a:solidFill></a:defRPr></a:lvl1pPr></a:lstStyle><a:p><a:fld id=\"{C1FF6DA9-008F-8B48-92A6-B652298478BF}\" type=\"slidenum\"><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>‹#›</a:t></a:fld><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp></p:spTree><p:extLst><p:ext uri=\"{BB962C8B-B14F-4D97-AF65-F5344CB8AC3E}\"><p14:creationId xmlns:p14=\"http://schemas.microsoft.com/office/powerpoint/2010/main\" val=\"2209977519\"/></p:ext></p:extLst></p:cSld><p:clrMap bg1=\"lt1\" tx1=\"dk1\" bg2=\"lt2\" tx2=\"dk2\" accent1=\"accent1\" accent2=\"accent2\" accent3=\"accent3\" accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\" hlink=\"hlink\" folHlink=\"folHlink\"/><p:sldLayoutIdLst><p:sldLayoutId id=\"2147483649\" r:id=\"rId1\"/></p:sldLayoutIdLst><p:txStyles><p:titleStyle><a:lvl1pPr algn=\"ctr\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:spcBef><a:spcPct val=\"0\"/></a:spcBef><a:buNone/><a:defRPr sz=\"4400\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mj-lt\"/><a:ea typeface=\"+mj-ea\"/><a:cs typeface=\"+mj-cs\"/></a:defRPr></a:lvl1pPr></p:titleStyle><p:bodyStyle><a:lvl1pPr marL=\"342900\" indent=\"-342900\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:spcBef><a:spcPct val=\"20000\"/></a:spcBef><a:buFont typeface=\"Arial\"/><a:buChar char=\"•\"/><a:defRPr sz=\"3200\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl1pPr><a:lvl2pPr marL=\"742950\" indent=\"-285750\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:spcBef><a:spcPct val=\"20000\"/></a:spcBef><a:buFont typeface=\"Arial\"/><a:buChar char=\"–\"/><a:defRPr sz=\"2800\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl2pPr><a:lvl3pPr marL=\"1143000\" indent=\"-228600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:spcBef><a:spcPct val=\"20000\"/></a:spcBef><a:buFont typeface=\"Arial\"/><a:buChar char=\"•\"/><a:defRPr sz=\"2400\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl3pPr><a:lvl4pPr marL=\"1600200\" indent=\"-228600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:spcBef><a:spcPct val=\"20000\"/></a:spcBef><a:buFont typeface=\"Arial\"/><a:buChar char=\"–\"/><a:defRPr sz=\"2000\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl4pPr><a:lvl5pPr marL=\"2057400\" indent=\"-228600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:spcBef><a:spcPct val=\"20000\"/></a:spcBef><a:buFont typeface=\"Arial\"/><a:buChar char=\"»\"/><a:defRPr sz=\"2000\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl5pPr><a:lvl6pPr marL=\"2514600\" indent=\"-228600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:spcBef><a:spcPct val=\"20000\"/></a:spcBef><a:buFont typeface=\"Arial\"/><a:buChar char=\"•\"/><a:defRPr sz=\"2000\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl6pPr><a:lvl7pPr marL=\"2971800\" indent=\"-228600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:spcBef><a:spcPct val=\"20000\"/></a:spcBef><a:buFont typeface=\"Arial\"/><a:buChar char=\"•\"/><a:defRPr sz=\"2000\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl7pPr><a:lvl8pPr marL=\"3429000\" indent=\"-228600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:spcBef><a:spcPct val=\"20000\"/></a:spcBef><a:buFont typeface=\"Arial\"/><a:buChar char=\"•\"/><a:defRPr sz=\"2000\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl8pPr><a:lvl9pPr marL=\"3886200\" indent=\"-228600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:spcBef><a:spcPct val=\"20000\"/></a:spcBef><a:buFont typeface=\"Arial\"/><a:buChar char=\"•\"/><a:defRPr sz=\"2000\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl9pPr></p:bodyStyle><p:otherStyle><a:defPPr><a:defRPr lang=\"en-US\"/></a:defPPr><a:lvl1pPr marL=\"0\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1800\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl1pPr><a:lvl2pPr marL=\"457200\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1800\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl2pPr><a:lvl3pPr marL=\"914400\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1800\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl3pPr><a:lvl4pPr marL=\"1371600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1800\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl4pPr><a:lvl5pPr marL=\"1828800\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1800\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl5pPr><a:lvl6pPr marL=\"2286000\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1800\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl6pPr><a:lvl7pPr marL=\"2743200\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1800\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl7pPr><a:lvl8pPr marL=\"3200400\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1800\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl8pPr><a:lvl9pPr marL=\"3657600\" algn=\"l\" defTabSz=\"457200\" rtl=\"0\" eaLnBrk=\"1\" latinLnBrk=\"0\" hangingPunct=\"1\"><a:defRPr sz=\"1800\" kern=\"1200\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill><a:latin typeface=\"+mn-lt\"/><a:ea typeface=\"+mn-ea\"/><a:cs typeface=\"+mn-cs\"/></a:defRPr></a:lvl9pPr></p:otherStyle></p:txStyles></p:sldMaster>";
+const SLIDELAYOUT1_XML = "<?xml version='1.0' encoding='UTF-8' standalone='yes'?>\n<p:sldLayout xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\" type=\"blank\" preserve=\"1\"><p:cSld name=\"Blank\"><p:spTree><p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr><p:sp><p:nvSpPr><p:cNvPr id=\"2\" name=\"Date Placeholder 1\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"dt\" sz=\"half\" idx=\"10\"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:fld id=\"{5BCAD085-E8A6-8845-BD4E-CB4CCA059FC4}\" type=\"datetimeFigureOut\"><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>1/27/13</a:t></a:fld><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"3\" name=\"Footer Placeholder 2\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"ftr\" sz=\"quarter\" idx=\"11\"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp><p:sp><p:nvSpPr><p:cNvPr id=\"4\" name=\"Slide Number Placeholder 3\"/><p:cNvSpPr><a:spLocks noGrp=\"1\"/></p:cNvSpPr><p:nvPr><p:ph type=\"sldNum\" sz=\"quarter\" idx=\"12\"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:fld id=\"{C1FF6DA9-008F-8B48-92A6-B652298478BF}\" type=\"slidenum\"><a:rPr lang=\"en-US\" smtClean=\"0\"/><a:t>‹#›</a:t></a:fld><a:endParaRPr lang=\"en-US\"/></a:p></p:txBody></p:sp></p:spTree><p:extLst><p:ext uri=\"{BB962C8B-B14F-4D97-AF65-F5344CB8AC3E}\"><p14:creationId xmlns:p14=\"http://schemas.microsoft.com/office/powerpoint/2010/main\" val=\"1212999818\"/></p:ext></p:extLst></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>";
+
+/* ---- zip.js ---- */
+
+/* ================= CRC32 ================= */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+/* ================= DOS date/time ================= */
+function dosDateTime(d) {
+  d = d || new Date();
+  const time = ((d.getHours() & 31) << 11) | ((d.getMinutes() & 63) << 5) | ((d.getSeconds() >> 1) & 31);
+  const date = (((d.getFullYear() - 1980) & 127) << 9) | (((d.getMonth() + 1) & 15) << 5) | (d.getDate() & 31);
+  return { time, date };
+}
+
+/* ================= Little-endian writers ================= */
+function u16(v) { const b = new Uint8Array(2); b[0] = v & 0xFF; b[1] = (v >>> 8) & 0xFF; return b; }
+function u32(v) { const b = new Uint8Array(4); b[0]=v&0xFF; b[1]=(v>>>8)&0xFF; b[2]=(v>>>16)&0xFF; b[3]=(v>>>24)&0xFF; return b; }
+function concatBytes(arrs) {
+  let len = 0; arrs.forEach(a => len += a.length);
+  const out = new Uint8Array(len);
+  let o = 0; arrs.forEach(a => { out.set(a, o); o += a.length; });
+  return out;
+}
+const enc = new TextEncoder();
+
+/**
+ * Build a ZIP archive using the STORED (no compression) method — no compression
+ * library required, only a CRC32 implementation. Entries: [{name, data}]
+ * where data is a Uint8Array or a UTF-8 string.
+ */
+function buildZip(entries) {
+  const now = dosDateTime();
+  const localParts = [], centralParts = [];
+  let offset = 0;
+
+  entries.forEach(({ name, data }) => {
+    const bytes = (typeof data === "string") ? enc.encode(data) : data;
+    const nameBytes = enc.encode(name);
+    const crc = crc32(bytes);
+    const size = bytes.length;
+
+    // Local file header
+    const lfh = concatBytes([
+      u32(0x04034b50), u16(20), u16(0), u16(0),
+      u16(now.time), u16(now.date),
+      u32(crc), u32(size), u32(size),
+      u16(nameBytes.length), u16(0),
+      nameBytes
+    ]);
+    localParts.push(lfh, bytes);
+    const localHeaderOffset = offset;
+    offset += lfh.length + bytes.length;
+
+    // Central directory header
+    const cdh = concatBytes([
+      u32(0x02014b50), u16(20), u16(20), u16(0), u16(0),
+      u16(now.time), u16(now.date),
+      u32(crc), u32(size), u32(size),
+      u16(nameBytes.length), u16(0), u16(0), u16(0), u16(0),
+      u32(0), u32(localHeaderOffset),
+      nameBytes
+    ]);
+    centralParts.push(cdh);
+  });
+
+  const centralDir = concatBytes(centralParts);
+  const centralOffset = offset;
+  const eocd = concatBytes([
+    u32(0x06054b50), u16(0), u16(0),
+    u16(entries.length), u16(entries.length),
+    u32(centralDir.length), u32(centralOffset), u16(0)
+  ]);
+
+  return concatBytes([...localParts, centralDir, eocd]);
+}
+
+/* ================= ZIP reader (supports STORED and DEFLATE) ================= */
+function readU16(view, off) { return view.getUint16(off, true); }
+function readU32(view, off) { return view.getUint32(off, true); }
+
+async function inflateRaw(bytes) {
+  if (typeof DecompressionStream === "undefined") {
+    throw new Error("Браузер не поддерживает DecompressionStream — обновите браузер до современной версии (Chrome/Edge/Firefox не старше 2023 года).");
+  }
+  const ds = new DecompressionStream("deflate-raw");
+  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  const buf = await new Response(stream).arrayBuffer();
+  return new Uint8Array(buf);
+}
+
+/**
+ * Parse a ZIP archive's central directory and return a map name -> entry info.
+ * Call readEntry(entry) to get the (possibly decompressed) bytes.
+ */
+function openZip(bytes) {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  // locate End Of Central Directory (search from the end, EOCD has no reliable fixed offset because of the comment field)
+  let eocdOff = -1;
+  const maxBack = Math.min(bytes.length, 66000);
+  for (let i = bytes.length - 22; i >= bytes.length - maxBack && i >= 0; i--) {
+    if (readU32(view, i) === 0x06054b50) { eocdOff = i; break; }
+  }
+  if (eocdOff < 0) throw new Error("Не удалось разобрать файл: это не ZIP/XLSX-архив или файл повреждён.");
+  const total = readU16(view, eocdOff + 10);
+  const cdSize = readU32(view, eocdOff + 12);
+  const cdOff = readU32(view, eocdOff + 16);
+
+  const entries = {};
+  let p = cdOff;
+  for (let i = 0; i < total; i++) {
+    if (readU32(view, p) !== 0x02014b50) throw new Error("Повреждён центральный каталог архива.");
+    const method = readU16(view, p + 10);
+    const crc = readU32(view, p + 16);
+    const compSize = readU32(view, p + 20);
+    const uncompSize = readU32(view, p + 24);
+    const nameLen = readU16(view, p + 28);
+    const extraLen = readU16(view, p + 30);
+    const commentLen = readU16(view, p + 32);
+    const localOff = readU32(view, p + 42);
+    const name = new TextDecoder("utf-8").decode(bytes.subarray(p + 46, p + 46 + nameLen));
+    entries[name] = { method, crc, compSize, uncompSize, localOff };
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+
+  async function readEntry(name) {
+    const e = entries[name];
+    if (!e) return null;
+    const lp = e.localOff;
+    const lNameLen = readU16(view, lp + 26);
+    const lExtraLen = readU16(view, lp + 28);
+    const dataStart = lp + 30 + lNameLen + lExtraLen;
+    const raw = bytes.subarray(dataStart, dataStart + e.compSize);
+    if (e.method === 0) return raw;
+    if (e.method === 8) return await inflateRaw(raw);
+    throw new Error("Неподдерживаемый метод сжатия в архиве (" + e.method + ").");
+  }
+
+  return { names: Object.keys(entries), has: n => !!entries[n], readEntry };
+}
+
+/* ---- xmlutil.js ---- */
+
+// Убирает символы, недопустимые в XML 1.0 — иначе получившийся файл будет
+// невалидным XML, а PowerPoint/Excel (в отличие от некоторых других программ)
+// в этом случае откроют документ как повреждённый/с пустым содержимым.
+const XML_INVALID_RE = /[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]/gu;
+function cleanXmlText(s) { return String(s == null ? "" : s).replace(XML_INVALID_RE, ""); }
+function xEsc(s) {
+  return cleanXmlText(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+/* ---- xmlparse.js ---- */
+
+/**
+ * Минимальный XML-парсер общего назначения (без внешних зависимостей).
+ * Строит дерево вида {tag, attrs:{}, children:[], text:""} — этого достаточно
+ * для разбора OOXML-частей (sheetN.xml, sharedStrings.xml, workbook.xml, .rels).
+ */
+const ENT = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+function decodeEntities(s) {
+  if (s.indexOf("&") === -1) return s;
+  return s.replace(/&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);/g, (m, body) => {
+    if (body[0] === "#") {
+      const code = (body[1] === "x" || body[1] === "X") ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
+      return isNaN(code) ? m : String.fromCodePoint(code);
+    }
+    return ENT.hasOwnProperty(body) ? ENT[body] : m;
+  });
+}
+function parseAttrs(s) {
+  const attrs = {};
+  const re = /([a-zA-Z_:][\w:.-]*)\s*=\s*"([^"]*)"|([a-zA-Z_:][\w:.-]*)\s*=\s*'([^']*)'/g;
+  let m;
+  while ((m = re.exec(s))) {
+    const name = m[1] || m[3], val = m[2] !== undefined ? m[2] : m[4];
+    attrs[name] = decodeEntities(val);
+  }
+  return attrs;
+}
+
+/**
+ * Разбирает XML-строку в дерево элементов. Возвращает корневой узел.
+ * Поддерживает: вложенные элементы, self-closing теги, атрибуты, текстовые
+ * узлы, CDATA, числовые и именованные ссылки на символы. Комментарии и
+ * XML-декларация вырезаются заранее.
+ */
+function parseXML(xmlIn) {
+  const xml = xmlIn.replace(/<\?xml[^?]*\?>/, "").replace(/<!--[\s\S]*?-->/g, "");
+  const n = xml.length;
+  let i = 0;
+
+  function parseElement() {
+    // xml[i] === '<' и это открывающий тег (не '</')
+    const tagMatch = /^<([a-zA-Z_:][\w:.-]*)((?:\s+[^<>]*?)?)\s*(\/?)>/.exec(xml.slice(i));
+    if (!tagMatch) { i++; return null; }
+    const tag = tagMatch[1], attrs = parseAttrs(tagMatch[2] || ""), selfClose = tagMatch[3] === "/";
+    i += tagMatch[0].length;
+    const node = { tag, attrs, children: [], text: "" };
+    if (selfClose) return node;
+
+    while (i < n) {
+      if (xml[i] !== "<") {
+        // текстовый узел до следующего тега
+        const start = i;
+        while (i < n && xml[i] !== "<") i++;
+        node.text += decodeEntities(xml.slice(start, i));
+        continue;
+      }
+      if (xml.startsWith("<![CDATA[", i)) {
+        const end = xml.indexOf("]]>", i + 9);
+        node.text += end < 0 ? xml.slice(i + 9) : xml.slice(i + 9, end);
+        i = end < 0 ? n : end + 3;
+        continue;
+      }
+      if (xml.startsWith("</", i)) {
+        const closeMatch = /^<\/([a-zA-Z_:][\w:.-]*)\s*>/.exec(xml.slice(i));
+        if (closeMatch) i += closeMatch[0].length; else i = n;
+        break; // закрывающий тег — независимо от совпадения имени, завершаем текущий элемент
+      }
+      const child = parseElement();
+      if (child) node.children.push(child);
+    }
+    return node;
+  }
+
+  while (i < n && xml[i] !== "<") i++;
+  return parseElement();
+}
+
+function children(node, tag) { return node && node.children ? node.children.filter(c => c.tag === tag) : []; }
+function child(node, tag) { return children(node, tag)[0] || null; }
+function allText(node) {
+  if (!node) return "";
+  let s = node.text || "";
+  (node.children || []).forEach(c => { s += allText(c); });
+  return s;
+}
+
+/* ---- xlsxread.js ---- */
+
+function colLetterToIndex(ref) {
+  const m = /^([A-Z]+)/.exec(ref);
+  if (!m) return 0;
+  let idx = 0;
+  for (const ch of m[1]) idx = idx * 26 + (ch.charCodeAt(0) - 64);
+  return idx - 1; // 0-based
+}
+
+async function readSharedStrings(zip) {
+  if (!zip.has("xl/sharedStrings.xml")) return [];
+  const bytes = await zip.readEntry("xl/sharedStrings.xml");
+  const xml = new TextDecoder("utf-8").decode(bytes);
+  const root = parseXML(xml);
+  return children(root, "si").map(si => allText(si));
+}
+
+async function resolveFirstSheetPath(zip) {
+  // По умолчанию — первый лист по порядку в workbook.xml, путь берём из workbook.xml.rels
+  const wbBytes = await zip.readEntry("xl/workbook.xml");
+  const wbXml = new TextDecoder("utf-8").decode(wbBytes);
+  const wbRoot = parseXML(wbXml);
+  const sheets = children(child(wbRoot, "sheets"), "sheet");
+  if (!sheets.length) throw new Error("В книге не найдено ни одного листа.");
+  const RID_NS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+  let rid = null;
+  for (const key of Object.keys(sheets[0].attrs)) {
+    if (key === "r:id" || key.endsWith(":id")) { rid = sheets[0].attrs[key]; break; }
+  }
+  if (!rid) throw new Error("Не удалось определить связь листа книги.");
+
+  const relsBytes = await zip.readEntry("xl/_rels/workbook.xml.rels");
+  const relsXml = new TextDecoder("utf-8").decode(relsBytes);
+  const relsRoot = parseXML(relsXml);
+  const rel = children(relsRoot, "Relationship").find(r => r.attrs.Id === rid);
+  if (!rel) throw new Error("Не удалось найти путь к листу в книге.");
+  let target = rel.attrs.Target;
+  if (target.startsWith("/")) target = target.slice(1);
+  else target = "xl/" + target.replace(/^\.?\//, "");
+  return target;
+}
+
+/**
+ * Читает первый лист xlsx-книги (байты ArrayBuffer/Uint8Array) и возвращает
+ * {rows, headers} в формате, совместимом с остальным приложением:
+ * rows[i][header] — отображаемое значение, rows[i]["__raw__"+header] — исходное
+ * числовое значение ячейки (для дат/чисел), если применимо.
+ */
+async function readXlsxFirstSheet(bytes) {
+  const zip = openZip(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
+  if (!zip.has("xl/workbook.xml")) throw new Error("Файл не похож на книгу Excel (.xlsx) — не найден xl/workbook.xml.");
+  const [sharedStrings, sheetPath] = await Promise.all([readSharedStrings(zip), resolveFirstSheetPath(zip)]);
+  if (!zip.has(sheetPath)) throw new Error("Не удалось найти данные листа внутри файла.");
+  const sheetBytes = await zip.readEntry(sheetPath);
+  const xml = new TextDecoder("utf-8").decode(sheetBytes);
+  const root = parseXML(xml);
+  const sheetData = child(root, "sheetData");
+  const xmlRows = children(sheetData, "row");
+  if (!xmlRows.length) throw new Error("В файле нет строк с данными.");
+
+  function readCell(c) {
+    const t = c.attrs.t || "n";
+    if (t === "inlineStr") { const is = child(c, "is"); return { text: is ? allText(is) : "", raw: null }; }
+    if (t === "s") { const idx = parseInt(allText(child(c, "v")) || "0", 10); const s = sharedStrings[idx]; return { text: s === undefined ? "" : s, raw: null }; }
+    if (t === "str") { const v = allText(child(c, "v")); return { text: v, raw: null }; }
+    if (t === "b") { const v = allText(child(c, "v")); return { text: v === "1" ? "TRUE" : "FALSE", raw: null }; }
+    // числовое значение (включая даты — хранятся как серийные числа)
+    const vNode = child(c, "v");
+    if (!vNode) return { text: "", raw: null };
+    const raw = parseFloat(allText(vNode));
+    return { text: allText(vNode), raw: isNaN(raw) ? null : raw };
+  }
+
+  // строка заголовков — первая строка листа
+  const headerRow = xmlRows[0];
+  const headerCells = children(headerRow, "c");
+  let maxCol = 0;
+  headerCells.forEach(c => { maxCol = Math.max(maxCol, colLetterToIndex(c.attrs.r || "A1")); });
+  const headers = new Array(maxCol + 1).fill("");
+  headerCells.forEach(c => {
+    const idx = colLetterToIndex(c.attrs.r || "A1");
+    headers[idx] = readCell(c).text.trim();
+  });
+  // отбрасываем пустые хвостовые столбцы без заголовка
+  while (headers.length && !headers[headers.length - 1]) headers.pop();
+  if (!headers.length) throw new Error("Не удалось определить заголовки столбцов в первой строке листа.");
+  // делаем имена заголовков уникальными на случай дублей/пустых
+  const seen = new Map();
+  for (let k = 0; k < headers.length; k++) {
+    let h = headers[k] || ("Столбец " + (k + 1));
+    if (seen.has(h)) { const n2 = seen.get(h) + 1; seen.set(h, n2); h = h + " (" + n2 + ")"; }
+    else seen.set(h, 1);
+    headers[k] = h;
+  }
+
+  const rows = [];
+  for (let r = 1; r < xmlRows.length; r++) {
+    const rowNode = xmlRows[r];
+    const cells = children(rowNode, "c");
+    if (!cells.length) continue;
+    const obj = {};
+    headers.forEach(h => { obj[h] = ""; });
+    cells.forEach(c => {
+      const idx = colLetterToIndex(c.attrs.r || "A1");
+      if (idx < 0 || idx >= headers.length) return;
+      const h = headers[idx];
+      const { text, raw } = readCell(c);
+      obj[h] = text;
+      if (raw !== null) obj["__raw__" + h] = raw;
+    });
+    rows.push(obj);
+  }
+  if (!rows.length) throw new Error("В файле нет строк с данными.");
+  return { rows, headers };
+}
+
+/* ---- xlsxwrite.js ---- */
+
+function colName(idx) { // 0-based -> "A", "B", ... "AA"
+  let n = idx + 1, s = "";
+  while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); }
+  return s;
+}
+
+/**
+ * Строит .xlsx (без внешних библиотек) из массива листов:
+ * sheets = [{name, rows: [[cellOrValue, ...], ...]}]
+ * Ячейка — число (числовая ячейка) или строка (текстовая, через inlineStr).
+ * null/undefined -> пустая ячейка (пропускается).
+ */
+function buildXlsx(sheets) {
+  const files = [];
+  files.push({ name: "[Content_Types].xml", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+${sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join("\n")}
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>` });
+
+  files.push({ name: "_rels/.rels", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>` });
+
+  const now = new Date().toISOString().replace(/\.\d+Z$/, "Z");
+  files.push({ name: "docProps/core.xml", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<dc:creator>Анализ единичных повреждений</dc:creator>
+<cp:lastModifiedBy>Анализ единичных повреждений</cp:lastModifiedBy>
+<dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
+<dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
+</cp:coreProperties>` });
+
+  files.push({ name: "docProps/app.xml", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+<Application>Анализ единичных повреждений</Application>
+</Properties>` });
+
+  files.push({ name: "xl/workbook.xml", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets>
+${sheets.map((sh, i) => `<sheet name="${xEsc(sh.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join("\n")}
+</sheets>
+</workbook>` });
+
+  files.push({ name: "xl/_rels/workbook.xml.rels", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+${sheets.map((_, i) => `<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join("\n")}
+</Relationships>` });
+
+  sheets.forEach((sh, si) => {
+    const rowsXml = sh.rows.map((row, ri) => {
+      const r = ri + 1;
+      const cells = row.map((val, ci) => {
+        if (val === null || val === undefined || val === "") return "";
+        const ref = colName(ci) + r;
+        if (typeof val === "number" && isFinite(val)) return `<c r="${ref}"><v>${val}</v></c>`;
+        return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xEsc(val)}</t></is></c>`;
+      }).join("");
+      return `<row r="${r}">${cells}</row>`;
+    }).join("");
+    const lastCol = colName(Math.max(0, ...sh.rows.map(r => r.length - 1)));
+    const lastRow = Math.max(1, sh.rows.length);
+    files.push({ name: `xl/worksheets/sheet${si+1}.xml`, data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><dimension ref="A1:${lastCol}${lastRow}"/><sheetData>${rowsXml}</sheetData></worksheet>` });
+  });
+
+  return buildZip(files);
+}
+
+/* ---- pptxwrite.js ---- */
+
+const EMU = 914400;
+const emu = inches => Math.round(inches * EMU);
+
+/* ---------- построение содержимого одного слайда ---------- */
+function makeSlideBuilder() {
+  let nextId = 2;
+  const shapes = [];
+  const notesParas = [];
+
+  function rect({ x, y, w, h, fill, line, rounded }) {
+    const id = nextId++;
+    shapes.push(
+`<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="Shape ${id}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>
+<p:spPr><a:xfrm><a:off x="${emu(x)}" y="${emu(y)}"/><a:ext cx="${emu(w)}" cy="${emu(h)}"/></a:xfrm>
+<a:prstGeom prst="${rounded ? "roundRect" : "rect"}"><a:avLst/></a:prstGeom>
+${fill ? `<a:solidFill><a:srgbClr val="${fill}"/></a:solidFill>` : "<a:noFill/>"}
+${line ? `<a:ln w="9525"><a:solidFill><a:srgbClr val="${line}"/></a:solidFill></a:ln>` : `<a:ln><a:noFill/></a:ln>`}
+</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/></p:txBody></p:sp>`);
+  }
+
+  // paragraphs: [{text, size, bold, italic, color, bullet, align}]
+  function text({ x, y, w, h, paragraphs, anchor, shrink }) {
+    const id = nextId++;
+    const ps = paragraphs.map(p => {
+      const pPrAttrs = [];
+      if (p.align) pPrAttrs.push(`algn="${p.align}"`);
+      if (p.bullet) pPrAttrs.push(`marL="228600" indent="-228600"`); else pPrAttrs.push(`marL="0" indent="0"`);
+      const buChar = p.bullet ? `<a:buFont typeface="Arial"/><a:buChar char="•"/>` : `<a:buNone/>`;
+      const rPrAttrs = [`lang="ru-RU"`, `sz="${Math.round((p.size || 14) * 100)}"`];
+      if (p.bold) rPrAttrs.push(`b="1"`);
+      if (p.italic) rPrAttrs.push(`i="1"`);
+      rPrAttrs.push(`dirty="0"`);
+      const fill = `<a:solidFill><a:srgbClr val="${p.color || "0C2233"}"/></a:solidFill>`;
+      const runs = (p.text === "" ? [{ t: "" }] : [{ t: p.text }]).map(r =>
+        `<a:r><a:rPr ${rPrAttrs.join(" ")}>${fill}</a:rPr><a:t xml:space="preserve">${xEsc(r.t)}</a:t></a:r>`).join("");
+      return `<a:p><a:pPr ${pPrAttrs.join(" ")}>${buChar}</a:pPr>${runs}</a:p>`;
+    }).join("");
+    shapes.push(
+`<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="TextBox ${id}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
+<p:spPr><a:xfrm><a:off x="${emu(x)}" y="${emu(y)}"/><a:ext cx="${emu(w)}" cy="${emu(h)}"/></a:xfrm>
+<a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/></p:spPr>
+<p:txBody><a:bodyPr wrap="square" anchor="${anchor || "t"}">${shrink ? "<a:normAutofit/>" : ""}</a:bodyPr><a:lstStyle/>${ps}</p:txBody></p:sp>`);
+  }
+
+  /**
+   * Горизонтальная столбчатая диаграмма, нарисованная фигурами (без chart-части).
+   * items: [{label, value, text, color}]
+   */
+  function bars(items, { x, y, w, h, max, labelW, valueW, labelSize, valueSize, target }) {
+    if (!items.length) return;
+    labelW = labelW != null ? labelW : w * 0.34;
+    valueW = valueW != null ? valueW : 1.15;
+    labelSize = labelSize || 11;
+    valueSize = valueSize || 11;
+    const rowH = h / items.length;
+    const maxVal = Math.max(...items.map(it => it.value), max || 0, 1e-9);
+    const barAreaX = x + labelW, barAreaW = Math.max(0.2, w - labelW - valueW);
+    items.forEach((it, i) => {
+      const rowY = y + i * rowH;
+      const barH = Math.max(0.12, rowH * 0.52);
+      const barY = rowY + (rowH - barH) / 2;
+      const barW = Math.max(0.03, (it.value / maxVal) * barAreaW);
+      text({ x: x, y: rowY, w: labelW - 0.08, h: rowH, anchor: "ctr",
+        paragraphs: [{ text: it.label, size: labelSize, color: "3D5468", align: "r" }] });
+      rect({ x: barAreaX, y: barY, w: barW, h: barH, fill: it.color || "0B6FB4" });
+      text({ x: barAreaX + barW + 0.06, y: rowY, w: valueW, h: rowH, anchor: "ctr",
+        paragraphs: [{ text: it.text != null ? it.text : String(it.value), size: valueSize, bold: true, color: "0C2233" }] });
+    });
+    if (target != null) {
+      const tx = barAreaX + (target / maxVal) * barAreaW;
+      const id = nextId++;
+      shapes.push(
+`<p:cxnSp><p:nvCxnSpPr><p:cNvPr id="${id}" name="Line ${id}"/><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>
+<p:spPr><a:xfrm><a:off x="${emu(tx)}" y="${emu(y)}"/><a:ext cx="0" cy="${emu(h)}"/></a:xfrm>
+<a:prstGeom prst="line"><a:avLst/></a:prstGeom>
+<a:ln w="19050"><a:solidFill><a:srgbClr val="C8443A"/></a:solidFill><a:prstDash val="dash"/></a:ln></p:spPr></p:cxnSp>`);
+    }
+  }
+
+  /**
+   * Вертикальная столбчатая диаграмма (для дневной динамики — по аналогии
+   * с «лентой месяца» на экране). items: [{label, value, color}]
+   */
+  function cols(items, { x, y, w, h, labelEvery, color }) {
+    if (!items.length) return;
+    const n = items.length, gap = Math.min(0.03, w / n * 0.15);
+    const barW = Math.max(0.02, (w - gap * (n - 1)) / n);
+    const maxVal = Math.max(...items.map(it => it.value), 1e-9);
+    const labelH = 0.22, chartH = h - labelH;
+    labelEvery = labelEvery || 1;
+    items.forEach((it, i) => {
+      const bx = x + i * (barW + gap);
+      const bh = Math.max(0.02, (it.value / maxVal) * chartH);
+      rect({ x: bx, y: y + chartH - bh, w: barW, h: bh, fill: it.color || color || "0B6FB4" });
+      if (i % labelEvery === 0) {
+        text({ x: bx - barW * 1.5, y: y + chartH + 0.03, w: barW * 4, h: labelH, anchor: "t",
+          paragraphs: [{ text: it.label, size: 7.5, color: "8FA6B6", align: "ctr" }] });
+      }
+    });
+  }
+
+  function notes(paragraphText) {
+    notesParas.push(paragraphText);
+  }
+
+  function xml(layoutRelId) {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+<p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
+${shapes.join("\n")}
+</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`;
+  }
+
+  function notesXml() {
+    const paras = notesParas.length ? notesParas : [""];
+    const ps = paras.map(t => `<a:p><a:r><a:rPr lang="ru-RU" sz="1200" dirty="0"/><a:t xml:space="preserve">${xEsc(t)}</a:t></a:r></a:p>`).join("");
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:notes xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+<p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
+<p:sp><p:nvSpPr><p:cNvPr id="2" name="Slide Image Placeholder"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="sldImg" idx="2"/></p:nvPr></p:nvSpPr><p:spPr/></p:sp>
+<p:sp><p:nvSpPr><p:cNvPr id="3" name="Notes Placeholder"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="body" idx="3" sz="quarter"/></p:nvPr></p:nvSpPr><p:spPr/>
+<p:txBody><a:bodyPr/><a:lstStyle/>${ps}</p:txBody></p:sp>
+</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:notes>`;
+  }
+
+  return { rect, text, bars, cols, notes, xml, notesXml };
+}
+
+/* ---- pptxpackage.js ---- */
+
+function xEsc(s) {
+  return String(s == null ? "" : s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+/**
+ * Собирает готовый .pptx (без внешних библиотек) из массива слайдов.
+ * slides: [{ xml: <string p:sld ...>, notesXml: <string p:notes ...> }]
+ * Раскладка — широкоэкранная 13.333 x 7.5 дюйма (12192000 x 6858000 EMU).
+ */
+function buildPptx(slides, meta) {
+  meta = meta || {};
+  const files = [];
+  const N = slides.length;
+
+  files.push({ name: "[Content_Types].xml", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
+<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>
+<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>
+<Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
+<Override PartName="/ppt/notesMasters/notesMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.notesMaster+xml"/>
+${slides.map((_, i) => `<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join("\n")}
+${slides.map((_, i) => `<Override PartName="/ppt/notesSlides/notesSlide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml"/>`).join("\n")}
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>` });
+
+  files.push({ name: "_rels/.rels", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>` });
+
+  const now = new Date().toISOString().replace(/\.\d+Z$/, "Z");
+  files.push({ name: "docProps/core.xml", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<dc:title>${xEsc(meta.title || "Презентация")}</dc:title>
+<dc:creator>${xEsc(meta.author || "Анализ единичных повреждений")}</dc:creator>
+<cp:lastModifiedBy>${xEsc(meta.author || "Анализ единичных повреждений")}</cp:lastModifiedBy>
+<dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
+<dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
+</cp:coreProperties>` });
+
+  files.push({ name: "docProps/app.xml", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+<Application>Анализ единичных повреждений</Application>
+<Slides>${N}</Slides>
+</Properties>` });
+
+  files.push({ name: "ppt/presentation.xml", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst>
+<p:notesMasterIdLst><p:notesMasterId r:id="rId2"/></p:notesMasterIdLst>
+<p:sldIdLst>${slides.map((_, i) => `<p:sldId id="${256 + i}" r:id="rId${i + 3}"/>`).join("")}</p:sldIdLst>
+<p:sldSz cx="12192000" cy="6858000" type="screen16x9"/>
+<p:notesSz cx="6858000" cy="9144000"/>
+</p:presentation>` });
+
+  files.push({ name: "ppt/_rels/presentation.xml.rels", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesMaster" Target="notesMasters/notesMaster1.xml"/>
+${slides.map((_, i) => `<Relationship Id="rId${i + 3}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`).join("\n")}
+</Relationships>` });
+
+  files.push({ name: "ppt/theme/theme1.xml", data: THEME1_XML });
+  files.push({ name: "ppt/notesMasters/notesMaster1.xml", data: NOTESMASTER1_XML });
+  files.push({ name: "ppt/notesMasters/_rels/notesMaster1.xml.rels", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/>
+</Relationships>` });
+
+  files.push({ name: "ppt/slideMasters/slideMaster1.xml", data: SLIDEMASTER1_XML });
+
+  files.push({ name: "ppt/slideMasters/_rels/slideMaster1.xml.rels", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/>
+</Relationships>` });
+
+  files.push({ name: "ppt/slideLayouts/slideLayout1.xml", data: SLIDELAYOUT1_XML });
+
+  files.push({ name: "ppt/slideLayouts/_rels/slideLayout1.xml.rels", data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/>
+</Relationships>` });
+
+  slides.forEach((sl, i) => {
+    const n = i + 1;
+    files.push({ name: `ppt/slides/slide${n}.xml`, data: sl.xml });
+    files.push({ name: `ppt/slides/_rels/slide${n}.xml.rels`, data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide" Target="../notesSlides/notesSlide${n}.xml"/>
+</Relationships>` });
+    files.push({ name: `ppt/notesSlides/notesSlide${n}.xml`, data: sl.notesXml });
+    files.push({ name: `ppt/notesSlides/_rels/notesSlide${n}.xml.rels`, data:
+`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesMaster" Target="../notesMasters/notesMaster1.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="../slides/slide${n}.xml"/>
+</Relationships>` });
+  });
+
+  return buildZip(files);
+}
+
+/* ---- csvread.js ---- */
+
+/** Простой разбор CSV/TSV с поддержкой кавычек и авто-определением разделителя. */
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // BOM
+  const firstLine = text.split(/\r\n|\n|\r/, 1)[0] || "";
+  const candidates = [",", ";", "\t"];
+  let delim = ",", best = -1;
+  candidates.forEach(d => { const c = firstLine.split(d).length; if (c > best) { best = c; delim = d; } });
+
+  const rows = [];
+  let row = [], field = "", inQuotes = false, i = 0;
+  const n = text.length;
+  while (i < n) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      field += ch; i++; continue;
+    }
+    if (ch === '"') { inQuotes = true; i++; continue; }
+    if (ch === delim) { row.push(field); field = ""; i++; continue; }
+    if (ch === "\r") { i++; continue; }
+    if (ch === "\n") { row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
+    field += ch; i++;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  while (rows.length && rows[rows.length - 1].every(c => c === "")) rows.pop();
+  if (!rows.length) throw new Error("В файле нет строк с данными.");
+
+  const headers = rows[0].map(h => h.trim());
+  const seen = new Map();
+  for (let k = 0; k < headers.length; k++) {
+    let h = headers[k] || ("Столбец " + (k + 1));
+    if (seen.has(h)) { const n2 = seen.get(h) + 1; seen.set(h, n2); h = h + " (" + n2 + ")"; }
+    else seen.set(h, 1);
+    headers[k] = h;
+  }
+  const out = [];
+  for (let r = 1; r < rows.length; r++) {
+    const obj = {};
+    headers.forEach((h, ci) => {
+      const v = rows[r][ci] !== undefined ? rows[r][ci] : "";
+      obj[h] = v;
+      const num = v.trim() !== "" && !isNaN(v) && !/^0[0-9]/.test(v.trim()) ? parseFloat(v) : null;
+      if (num !== null) obj["__raw__" + h] = num;
+    });
+    out.push(obj);
+  }
+  if (!out.length) throw new Error("В файле нет строк с данными.");
+  return { rows: out, headers };
+}
+
+/* ---- rtfwrite.js ---- */
+
+/**
+ * Простой генератор RTF (Rich Text Format) — без внешних библиотек.
+ * RTF — обычный текстовый формат (не ZIP/XML), поддерживается Word начиная
+ * с очень старых версий (Word 97+), поэтому открывается в Office 2003
+ * напрямую, без «пакета совместимости», который нужен для .pptx/.docx.
+ */
+function rtfEscapeChar(ch, code){
+  if(ch === "\\" || ch === "{" || ch === "}") return "\\" + ch;
+  if(code === 10) return "\\par\n";
+  if(code === 9) return "\\tab ";
+  if(code < 128) return ch;
+  const signed = code > 32767 ? code - 65536 : code;
+  return "\\u" + signed + "?";
+}
+function rtfEscape(s){
+  let out = "";
+  for(const ch of String(s == null ? "" : s)){
+    const code = ch.codePointAt(0);
+    if(code > 0xFFFF){ out += "?"; continue; } // редкие astral-символы (эмодзи и т.п.) — пропускаем
+    out += rtfEscapeChar(ch, code);
+  }
+  return out;
+}
+const TWIPS_PER_INCH = 1440;
+const tw = inches => Math.round(inches * TWIPS_PER_INCH);
+
+/** Билдер RTF-документа: копит параграфы/таблицы, затем собирает готовую строку. */
+function makeRtfBuilder(){
+  const body = [];
+
+  function para(text, opts){
+    opts = opts || {};
+    const parts = ["\\pard"];
+    if(opts.align === "center") parts.push("\\qc");
+    if(opts.spaceBefore) parts.push("\\sb" + Math.round(opts.spaceBefore*20));
+    if(opts.spaceAfter) parts.push("\\sa" + Math.round(opts.spaceAfter*20));
+    if(opts.indent) parts.push("\\li" + tw(opts.indent));
+    parts.push(" ");
+    let run = "";
+    if(opts.bold) run += "\\b ";
+    if(opts.italic) run += "\\i ";
+    if(opts.size) run += "\\fs" + Math.round(opts.size*2) + " ";
+    if(opts.color != null) run += "\\cf" + opts.color + " ";
+    run += rtfEscape(text);
+    if(opts.bold) run += "\\b0";
+    if(opts.italic) run += "\\i0";
+    body.push("{" + parts.join("") + run + "\\par}");
+  }
+
+  function bulletList(items, opts){
+    opts = opts || {};
+    items.forEach(t => {
+      body.push(`{\\pard\\li${tw(0.35)}\\fi${tw(-0.2)} \\bullet\\tab ${opts.size?"\\fs"+Math.round(opts.size*2)+" ":""}${rtfEscape(t)}\\par}`);
+    });
+  }
+
+  function heading(text, level){
+    const sizes = {1:22, 2:16};
+    para(text, {bold:true, size:sizes[level]||16, spaceBefore: level===1?18:14, spaceAfter:6, color: level===1?1:2});
+  }
+
+  /** rows: [[cellText,...],...]; первая строка — заголовок (жирным, залитый фон) */
+  function table(rows, colWidthsInches){
+    if(!rows.length) return;
+    const widths = colWidthsInches.map(tw);
+    let x = 0;
+    const cellx = widths.map(w => { x += w; return x; });
+    rows.forEach((row, ri) => {
+      const isHead = ri === 0;
+      let def = "\\trowd\\trgaph60\\trleft0";
+      cellx.forEach(c => { def += `\\clbrdrt\\brdrs\\clbrdrl\\brdrs\\clbrdrb\\brdrs\\clbrdrr\\brdrs\\cellx${c}`; });
+      let cells = "";
+      row.forEach((cellText, ci) => {
+        const align = (ci>0 && !isNaN(parseFloat(String(cellText).replace(",",".")))) ? "\\qr" : "\\ql";
+        cells += `{\\pard${align}\\intbl ${isHead?"\\b ":""}\\fs18 ${rtfEscape(cellText)}${isHead?"\\b0":""}\\cell}`;
+      });
+      body.push(def + cells + "\\row");
+    });
+    body.push("{\\pard\\par}");
+  }
+
+  function pageBreak(){ body.push("\\page"); }
+
+  function raw(s){ body.push(s); }
+
+  return { para, bulletList, heading, table, pageBreak, raw, body };
+}
+
+/** ASCII-полоска доли без юникодных блоков (надёжна в любом старом Word). */
+function asciiBar(value, max, width){
+  width = width || 24;
+  const n = Math.max(0, Math.min(width, Math.round((value/(max||1))*width)));
+  return "[" + "#".repeat(n) + ".".repeat(width-n) + "]";
+}
+
+const COLORS = "\\red12\\green34\\blue51;\\red11\\green111\\blue180;\\red61\\green84\\blue104;\\red200\\green68\\blue58;\\red46\\green139\\blue98;";
+// cf1=ink(0C2233) cf2=azure(0B6FB4) cf3=ink-soft(3D5468) cf4=crimson(C8443A) cf5=green(2E8B62)
+
+function buildRtf(builder, meta){
+  meta = meta || {};
+  const header = `{\\rtf1\\ansi\\ansicpg1251\\deff0\\deflang1049
+{\\fonttbl{\\f0\\fswiss\\fcharset204 Arial;}{\\f1\\fmodern\\fcharset204 Courier New;}}
+{\\colortbl;${COLORS}}
+{\\info{\\title ${rtfEscape(meta.title||"")}}{\\author ${rtfEscape(meta.author||"")}}}
+\\paperw11906\\paperh16838\\margl1080\\margr1080\\margt1080\\margb1080
+\\viewkind4\\uc1\\pard\\f0\\fs20
+`;
+  return header + builder.body.join("\n") + "\n}";
+}
+</script>
+<style>
+:root{
+  --ink:#0C2233;
+  --ink-soft:#3D5468;
+  --azure:#0B6FB4;
+  --cyan:#17A9C4;
+  --amber:#E09B2D;
+  --crimson:#C8443A;
+  --green:#2E8B62;
+  --paper:#F5F8FA;
+  --card:#FFFFFF;
+  --line:#DCE6ED;
+  --line-soft:#EDF2F6;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+
+header.top{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:26px}
+header.top h1{margin:0 0 6px;font-size:27px;font-weight:700;letter-spacing:-.02em}
+header.top p{margin:0;color:var(--ink-soft);font-size:14.5px;max-width:70ch}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px 22px;margin-bottom:18px}
+.card > h2{margin:0 0 4px;font-size:17px;font-weight:700}
+.card > h2 + .hint{margin:0 0 16px}
+.hint{color:var(--ink-soft);font-size:13.5px;margin:0 0 12px}
+.step{display:inline-flex;align-items:center;justify-content:center;width:23px;height:23px;border-radius:50%;background:var(--ink);color:#fff;font-size:13px;font-weight:700;margin-right:9px;vertical-align:2px}
+
+.drops{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.drops{grid-template-columns:1fr}}
+.drop{border:1.5px dashed var(--line);border-radius:9px;background:#FBFDFE;padding:18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--azure);background:#F0F7FC}
+.drop.filled{border-style:solid;border-color:var(--cyan);background:#F2FAFC;text-align:left}
+.drop .lbl{font-weight:600;font-size:14px}
+.drop .sub{color:var(--ink-soft);font-size:12.5px;margin-top:4px}
+.drop input{display:none}
+
+.grid-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:12px 16px}
+.fld{display:flex;flex-direction:column;gap:4px}
+.fld label{font-size:12.5px;color:var(--ink-soft);font-weight:600}
+select,input[type=number],input[type=text]{
+  font:inherit;font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);width:100%
+}
+select:focus,input:focus,button:focus-visible{outline:2px solid var(--azure);outline-offset:1px}
+.req label::after{content:" *";color:var(--crimson)}
+
+.settings{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px 16px;align-items:end}
+.check{display:flex;align-items:center;gap:8px;font-size:14px;padding-bottom:7px}
+.check input{width:17px;height:17px;accent-color:var(--azure)}
+
+button{font:inherit;font-weight:600;border-radius:7px;border:1px solid transparent;padding:10px 18px;cursor:pointer;transition:filter .15s}
+button:hover:not(:disabled){filter:brightness(.93)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.btn-main{background:var(--ink);color:#fff}
+.btn-alt{background:#fff;color:var(--ink);border-color:var(--line)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.kpi{border:1px solid var(--line);border-radius:9px;padding:14px 16px;background:#fff}
+.kpi .k-lbl{font-size:12.5px;color:var(--ink-soft);font-weight:600;min-height:32px}
+.kpi .k-val{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.15;margin-top:2px}
+.kpi .k-dlt{font-size:12.5px;font-weight:600;margin-top:3px}
+.up{color:var(--green)}.down{color:var(--crimson)}.flat{color:var(--ink-soft)}
+.kpi.warn{border-color:#F0D2A8;background:#FDF8EF}
+.kpi.bad{border-color:#EFC3BE;background:#FDF3F2}
+
+.strip{display:flex;align-items:flex-end;gap:3px;height:132px;margin:6px 0 8px;overflow-x:auto;padding-bottom:2px}
+.day{flex:1 1 0;min-width:11px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative}
+.day .bar{width:100%;border-radius:3px 3px 0 0;min-height:3px}
+.day .dn{font-size:9.5px;color:var(--ink-soft);margin-top:4px}
+.day.off .dn{color:var(--crimson)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);margin-top:6px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line-soft)}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);border-bottom:1px solid var(--line);white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tbody tr:hover{background:#F8FBFD}
+.tbl-scroll{overflow-x:auto;max-height:420px;overflow-y:auto}
+.pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;font-weight:600}
+.p-ok{background:#E4F3EB;color:#1F6B4A}
+.p-warn{background:#FCF1DE;color:#8A6014}
+.p-bad{background:#FBE9E7;color:#9C3129}
+
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:860px){.chart-row{grid-template-columns:1fr}}
+.chart-box h3{margin:0 0 2px;font-size:15px;font-weight:700}
+.chart-box .note{font-size:13px;color:var(--ink-soft);margin:8px 0 0;border-left:2px solid var(--cyan);padding-left:10px}
+svg{width:100%;height:auto;display:block}
+
+.msg{padding:11px 14px;border-radius:8px;font-size:13.5px;margin-top:12px}
+.msg-err{background:#FBE9E7;color:#8E2E26;border:1px solid #F0C7C2}
+.msg-ok{background:#E9F5EF;color:#1F6B4A;border:1px solid #C6E4D5}
+.hidden{display:none}
+footer{color:var(--ink-soft);font-size:12.5px;text-align:center;margin-top:34px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>Анализ единичных повреждений</h1>
+  <p>Загрузите месячную выгрузку по единичным повреждениям — инструмент посчитает показатели, сравнит с предыдущим месяцем и соберёт готовую презентацию с диаграммами и пояснениями к каждому слайду.</p>
+</header>
+
+<section class="card">
+  <h2><span class="step">1</span>Файлы выгрузки</h2>
+  <p class="hint">Форматы .xlsx и .csv (старый бинарный .xls не поддерживается — пересохраните файл как .xlsx). Второй файл нужен для сравнения — без него отчёт соберётся, но без динамики к прошлому месяцу.</p>
+  <div class="drops">
+    <label class="drop" id="dropCur">
+      <input type="file" id="fileCur" accept=".xlsx,.csv">
+      <div class="lbl" id="lblCur">Отчётный месяц</div>
+      <div class="sub" id="subCur">Перетащите файл или нажмите, чтобы выбрать</div>
+    </label>
+    <label class="drop" id="dropPrev">
+      <input type="file" id="filePrev" accept=".xlsx,.csv">
+      <div class="lbl" id="lblPrev">Предыдущий месяц</div>
+      <div class="sub" id="subPrev">Для сравнения — можно добавить позже</div>
+    </label>
+  </div>
+  <div id="loadMsg"></div>
+</section>
+
+<section class="card hidden" id="mapCard">
+  <h2><span class="step">2</span>Соответствие столбцов</h2>
+  <p class="hint">Столбцы распознаны автоматически. Проверьте и поправьте, если что-то определилось неверно.</p>
+  <div class="grid-map" id="mapGrid"></div>
+</section>
+
+<section class="card hidden" id="setCard">
+  <h2><span class="step">3</span>Нормативы</h2>
+  <p class="hint">Значения по умолчанию соответствуют действующему регламенту.</p>
+  <div class="settings">
+    <div class="fld"><label for="sCtrl">Контрольный срок, часов</label><input type="number" id="sCtrl" value="8" min="1" max="72" step="1"></div>
+    <div class="fld"><label for="sPlan">План по GPON в день подачи, %</label><input type="number" id="sPlan" value="85" min="1" max="100" step="1"></div>
+    <div class="fld"><label for="sCut">Отсечка переноса на след. день</label><input type="number" id="sCut" value="17" min="0" max="23" step="1"></div>
+    <div class="fld"><label for="sRepeat">Особый контроль — обращений от абонента</label><input type="number" id="sRepeat" value="3" min="2" max="10" step="1"></div>
+    <div class="fld"><label for="sBranch">Подразделение для титула</label><input type="text" id="sBranch" placeholder="например: Участок №3"></div>
+    <div class="check"><input type="checkbox" id="sSat" checked><label for="sSat">Суббота — рабочий день</label></div>
+  </div>
+  <div class="actions">
+    <button class="btn-main" id="btnCalc">Рассчитать</button>
+  </div>
+  <div id="calcMsg"></div>
+</section>
+
+<div id="out"></div>
+
+<footer>Данные обрабатываются локально в браузере и никуда не передаются.</footer>
+</div>
+
+<script>
+"use strict";
+
+/* ============================ Утилиты ============================ */
+const $ = s => document.querySelector(s);
+const MONTHS = ["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];
+const MONTHS_N = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const PAL = {ink:"0C2233", azure:"0B6FB4", cyan:"17A9C4", amber:"E09B2D", crimson:"C8443A", green:"2E8B62", grey:"8FA6B6", line:"DCE6ED"};
+
+const nf = n => (n==null||isNaN(n)) ? "—" : new Intl.NumberFormat("ru-RU").format(Math.round(n));
+const pf = (n,d=1) => (n==null||isNaN(n)) ? "—" : n.toFixed(d).replace(".",",")+"%";
+const hf = n => (n==null||isNaN(n)) ? "—" : (n<1 ? Math.round(n*60)+" мин" : n.toFixed(1).replace(".",",")+" ч");
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function plural(n, forms){ // forms: [1, 2-4, 5+]
+  n = Math.abs(Math.round(n||0));
+  const d10 = n%10, d100 = n%100;
+  if(d100>=11 && d100<=14) return forms[2];
+  if(d10===1) return forms[0];
+  if(d10>=2 && d10<=4) return forms[1];
+  return forms[2];
+}
+const zN  = n => nf(n)+" "+plural(n, ["заявка","заявки","заявок"]);
+const zR  = n => nf(n)+" "+plural(n, ["заявки","заявок","заявок"]);
+const zP  = n => nf(n)+" "+plural(n, ["заявке","заявках","заявках"]);
+const dN  = n => nf(n)+" "+plural(n, ["день","дня","дней"]);
+const plAb = n => nf(n)+" "+plural(n, ["абонент","абонента","абонентов"]);
+
+function toDate(v){
+  if(v==null || v==="") return null;
+  if(v instanceof Date) return isNaN(v.getTime()) ? null : v;
+  if(typeof v === "number" && isFinite(v)){
+    if(v < 20 || v > 80000) return null;
+    const ms = Math.round((v - 25569) * 86400000);
+    const d = new Date(ms);
+    if(isNaN(d.getTime())) return null;
+    return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds());
+  }
+  const s = String(v).trim();
+  if(!s) return null;
+  let m = s.match(/^(\d{1,2})[.\-\/](\d{1,2})[.\-\/](\d{2,4})(?:[ ,T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m){ let y=+m[3]; if(y<100) y+=2000; return new Date(y,+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0)); }
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m) return new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+const dayKey = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const sameDay = (a,b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+
+/* ============================ Чтение файлов ============================ */
+const STATE = {cur:null, prev:null, map:{}, res:null};
+
+function readWorkbook(file){
+  const lower = (file.name||"").toLowerCase();
+  if(lower.endsWith(".xls")){
+    return Promise.reject(new Error("Старый формат .xls (Excel 97-2003) не поддерживается — откройте файл в Excel/Qlik Sense и пересохраните как .xlsx, либо экспортируйте в .csv."));
+  }
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = async e => {
+      try{
+        let result;
+        if(lower.endsWith(".csv")){
+          const text = new TextDecoder("utf-8").decode(new Uint8Array(e.target.result));
+          result = parseCSV(text);
+        } else {
+          result = await readXlsxFirstSheet(new Uint8Array(e.target.result));
+        }
+        res({rows: result.rows, headers: result.headers, name: file.name});
+      }catch(err){ rej(new Error("Не удалось прочитать файл: "+err.message)); }
+    };
+    r.onerror = () => rej(new Error("Ошибка чтения файла."));
+    r.readAsArrayBuffer(file);
+  });
+}
+function downloadBlob(bytes, filename, mime){
+  const blob = new Blob([bytes], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+const cell = (row,key) => (key && row["__raw__"+key]!==undefined) ? row["__raw__"+key] : (key ? row[key] : "");
+
+/* ============================ Распознавание столбцов ============================ */
+const FIELDS = [
+  {id:"reg",   name:"Дата и время регистрации", req:true,  pat:[/дата\s*создания/i, /дата.*(регистр|подач|поступ|заявк|обращ)/i, /(регистр|поступл|подач).*дата/i, /время\s*\(о\)/i, /начал/i]},
+  {id:"fix",   name:"Дата и время устранения",  req:true,  pat:[/дата.*(устран|закрыт|выполн|оконч)/i, /(устран|закрыт|выполн).*дата/i, /время\s*\(у\)/i, /оконч/i]},
+  {id:"tech",  name:"Технология (медь / GPON)", req:false, pat:[/технолог/i, /gpon|оптик|среда передач/i, /тип.*лини/i]},
+  {id:"unit",  name:"Участок / подразделение",  req:false, pat:[/участ/i, /подразделен/i, /цех|бригад/i, /филиал|рэс|атс/i]},
+  {id:"exec",  name:"Исполнитель",              req:false, pat:[/исполнит/i, /мон[тт][её]р/i, /ответствен/i, /электромех/i]},
+  {id:"cause", name:"Причина / шифр закрытия",  req:false, pat:[/причин/i, /шифр/i, /классифик/i]},
+  {id:"dtype", name:"Тип повреждения",          req:false, pat:[/тип.*поврежд/i, /категор.*поврежд/i, /характер.*поврежд/i, /вид.*поврежд/i]},
+  {id:"status",name:"Статус заявки",            req:false, pat:[/статус/i, /состояни/i]},
+  {id:"num",   name:"Номер заявки",             req:false, pat:[/номер\s*устройства/i, /номер.*заяв/i, /^№/i, /^id$/i, /наряд/i]},
+  {id:"serv",  name:"Услуга / вид связи",       req:false, pat:[/номер\s*продукта/i, /услуг/i, /вид связи/i, /сервис/i]},
+  {id:"addr",  name:"Адрес / абонент",          req:false, pat:[/тип\s*населенного\s*пункта/i, /адрес/i, /улиц/i, /абонент/i, /лицев/i]}
+];
+
+function autoMap(headers){
+  const map = {}, used = new Set();
+  FIELDS.forEach(f => {
+    for(const p of f.pat){
+      const h = headers.find(x => !used.has(x) && p.test(String(x)));
+      if(h){ map[f.id]=h; used.add(h); break; }
+    }
+  });
+  return map;
+}
+
+function renderMap(headers){
+  const g = $("#mapGrid"); g.innerHTML = "";
+  FIELDS.forEach(f => {
+    const d = document.createElement("div");
+    d.className = "fld" + (f.req ? " req" : "");
+    const opts = ['<option value="">— не используется —</option>']
+      .concat(headers.map(h => `<option value="${esc(h)}"${STATE.map[f.id]===h?" selected":""}>${esc(h)}</option>`)).join("");
+    d.innerHTML = `<label for="map_${f.id}">${f.name}</label><select id="map_${f.id}" data-f="${f.id}">${opts}</select>`;
+    g.appendChild(d);
+  });
+  g.querySelectorAll("select").forEach(s => s.addEventListener("change", e => { STATE.map[e.target.dataset.f] = e.target.value; }));
+}
+
+/* ============================ Расчёты ============================ */
+function normTech(v){
+  const s = String(v||"").toLowerCase();
+  if(/gpon|оптик|fttx|ftth|пон\b/.test(s)) return "Оптика (GPON)";
+  if(/мед|adsl|xdsl|abon|кабел|птс/.test(s)) return "Медь";
+  return s.trim() ? String(v).trim() : "Не указано";
+}
+const DTYPE_ORDER = ["Терминальное","Кабельное","Линейно-абонентское","Станционно-абонентское","WLL","Абонентское","Другое","Не указано"];
+function normDamageType(v){
+  const s = String(v||"").toLowerCase();
+  if(!s.trim()) return "Не указано";
+  if(/линейно.?абонент/.test(s)) return "Линейно-абонентское";
+  if(/станцион.{0,3}абонент/.test(s)) return "Станционно-абонентское";
+  if(/термина/.test(s)) return "Терминальное";
+  if(/кабел/.test(s)) return "Кабельное";
+  if(/\bwll\b/.test(s)) return "WLL";
+  if(/абонент/.test(s)) return "Абонентское";
+  return "Другое";
+}
+function nextWorkday(d, satWork){
+  const n = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1);
+  while(n.getDay()===0 || (!satWork && n.getDay()===6)) n.setDate(n.getDate()+1);
+  return n;
+}
+
+function build(data, cfg){
+  const m = STATE.map, recs = [], bad = {reg:0, fix:0};
+  data.rows.forEach(r => {
+    const reg = toDate(cell(r, m.reg));
+    if(!reg){ bad.reg++; return; }
+    const fix = toDate(cell(r, m.fix));
+    if(!fix){ bad.fix++; }
+    const hours = fix ? (fix - reg)/3600000 : null;
+    const deadline = reg.getHours() >= cfg.cut ? nextWorkday(reg, cfg.sat) : reg;
+    recs.push({
+      reg, fix,
+      hours: (hours!=null && hours >= 0) ? hours : null,
+      inCtrl: (hours!=null && hours >= 0) ? hours <= cfg.ctrl : null,
+      onDay: fix ? (fix <= new Date(deadline.getFullYear(), deadline.getMonth(), deadline.getDate(), 23, 59, 59)) : false,
+      moved: reg.getHours() >= cfg.cut,
+      tech: normTech(cell(r, m.tech)),
+      unit: String(cell(r, m.unit)||"").trim() || "Не указано",
+      exec: String(cell(r, m.exec)||"").trim() || "Не указано",
+      cause: String(cell(r, m.cause)||"").trim() || "Не указано",
+      dtype: normDamageType(cell(r, m.dtype)),
+      status: String(cell(r, m.status)||"").trim(),
+      num: String(cell(r, m.num)||"").trim(),
+      addr: String(cell(r, m.addr)||"").trim()
+    });
+  });
+  return {recs, bad};
+}
+
+function groupStat(recs, keyFn){
+  const g = new Map();
+  recs.forEach(r => {
+    const k = keyFn(r); if(k==null) return;
+    if(!g.has(k)) g.set(k, {key:k, total:0, ctrlOk:0, ctrlN:0, dayOk:0, sumH:0, sumN:0, over:0});
+    const o = g.get(k); o.total++;
+    if(r.inCtrl!=null){ o.ctrlN++; if(r.inCtrl) o.ctrlOk++; else o.over++; }
+    if(r.onDay) o.dayOk++;
+    if(r.hours!=null){ o.sumH += r.hours; o.sumN++; }
+  });
+  return [...g.values()].map(o => ({
+    ...o,
+    ctrlPct: o.ctrlN ? o.ctrlOk/o.ctrlN*100 : null,
+    dayPct: o.total ? o.dayOk/o.total*100 : null,
+    avgH: o.sumN ? o.sumH/o.sumN : null
+  }));
+}
+
+function analyze(built, cfg){
+  const R = built.recs;
+  const s = {};
+  s.total = R.length;
+  s.closed = R.filter(r => r.fix).length;
+  s.open = s.total - s.closed;
+  const withH = R.filter(r => r.hours!=null);
+  s.ctrlN = withH.length;
+  s.ctrlOk = withH.filter(r => r.inCtrl).length;
+  s.ctrlPct = s.ctrlN ? s.ctrlOk/s.ctrlN*100 : null;
+  s.over = s.ctrlN - s.ctrlOk;
+  s.avgH = s.ctrlN ? withH.reduce((a,r)=>a+r.hours,0)/s.ctrlN : null;
+  const sorted = withH.map(r=>r.hours).sort((a,b)=>a-b);
+  s.medH = sorted.length ? sorted[Math.floor(sorted.length/2)] : null;
+  s.maxH = sorted.length ? sorted[sorted.length-1] : null;
+  s.dayOk = R.filter(r => r.onDay).length;
+  s.dayPct = s.total ? s.dayOk/s.total*100 : null;
+  s.moved = R.filter(r => r.moved).length;
+
+  const gp = R.filter(r => r.tech.indexOf("GPON") > -1);
+  s.gponN = gp.length;
+  s.gponDayOk = gp.filter(r => r.onDay).length;
+  s.gponDayPct = gp.length ? s.gponDayOk/gp.length*100 : null;
+  s.gponGap = s.gponDayPct!=null ? s.gponDayPct - cfg.plan : null;
+
+  s.byTech = groupStat(R, r => r.tech).sort((a,b)=>b.total-a.total);
+  s.byUnit = groupStat(R, r => r.unit).sort((a,b)=>b.total-a.total);
+  s.byExec = groupStat(R, r => r.exec).sort((a,b)=>b.total-a.total);
+  s.byCause = groupStat(R, r => r.cause).sort((a,b)=>b.total-a.total);
+  s.byDay = groupStat(R, r => dayKey(r.reg)).sort((a,b)=>a.key<b.key?-1:1);
+  s.byDay.forEach(d => { const p=d.key.split("-"); d.date = new Date(+p[0],+p[1]-1,+p[2]); d.dow = d.date.getDay(); });
+
+  const B = [[0,2,"до 2 ч"],[2,4,"2–4 ч"],[4,cfg.ctrl,"4–"+cfg.ctrl+" ч"],[cfg.ctrl,24,cfg.ctrl+"–24 ч"],[24,72,"1–3 сут."],[72,1e9,"более 3 сут."]];
+  s.buckets = B.map(b => ({label:b[2], count:withH.filter(r => r.hours>=b[0] && r.hours<b[1]).length}))
+               .filter((b,i) => !(i===2 && cfg.ctrl<=4));
+  s.buckets.forEach(b => b.pct = s.ctrlN ? b.count/s.ctrlN*100 : 0);
+
+  s.overdue = withH.filter(r => !r.inCtrl).sort((a,b)=>b.hours-a.hours);
+
+  // Период определяется по преобладающему месяцу, а не по самой ранней дате —
+  // так единичные ошибочные даты в выгрузке (например, случайно попавшая запись
+  // из соседнего месяца) не сбивают подпись отчёта.
+  const monthCount = new Map();
+  R.forEach(r => { const k = r.reg.getFullYear()+"-"+r.reg.getMonth(); monthCount.set(k, (monthCount.get(k)||0)+1); });
+  let bestKey=null, bestN=-1;
+  monthCount.forEach((v,k) => { if(v>bestN){ bestN=v; bestKey=k; } });
+  let periodY=null, periodM=null;
+  if(bestKey){ const p=bestKey.split("-"); periodY=+p[0]; periodM=+p[1]; }
+  s.period = periodY!=null ? MONTHS_N[periodM]+" "+periodY : "период не определён";
+  s.periodGen = periodY!=null ? MONTHS[periodM]+" "+periodY : "";
+  s.stray = periodY!=null ? R.filter(r => r.reg.getFullYear()!==periodY || r.reg.getMonth()!==periodM).length : 0;
+  s.workDays = s.byDay.length;
+  s.perDay = s.workDays ? s.total/s.workDays : null;
+  const peak = s.byDay.slice().sort((a,b)=>b.total-a.total)[0];
+  s.peak = peak || null;
+  s.bad = built.bad;
+
+  // Переходящие / устранённые в день подачи
+  s.dayType = [
+    {key:"Устранено в день подачи", total:s.dayOk, pct: s.total ? s.dayOk/s.total*100 : null},
+    {key:"Переходящие", total:s.total-s.dayOk, pct: s.total ? (s.total-s.dayOk)/s.total*100 : null}
+  ];
+
+  // Тип повреждения
+  s.byDtype = groupStat(R, r => r.dtype).sort((a,b) => DTYPE_ORDER.indexOf(a.key) - DTYPE_ORDER.indexOf(b.key));
+
+  // Повторные единичные обращения — группировка по столбцу «Адрес / абонент»
+  const addrMap = new Map();
+  R.forEach(r => {
+    const k = r.addr && r.addr.trim();
+    if(!k || k === "Не указано") return;
+    if(!addrMap.has(k)) addrMap.set(k, []);
+    addrMap.get(k).push(r);
+  });
+  const repeatGroups = [...addrMap.entries()]
+    .map(([addr, list]) => ({addr, count:list.length, list: list.slice().sort((a,b)=>a.reg-b.reg)}))
+    .filter(g => g.count >= 2)
+    .sort((a,b) => b.count - a.count);
+  s.addrKnown = addrMap.size;
+  s.repeatGroups = repeatGroups;
+  s.repeatN = repeatGroups.length;
+  s.repeatComplaints = repeatGroups.reduce((a,g)=>a+g.count,0);
+  s.repeatSharePct = s.total ? s.repeatComplaints/s.total*100 : null;
+  s.criticalGroups = repeatGroups.filter(g => g.count >= cfg.repeat);
+  s.criticalN = s.criticalGroups.length;
+
+  return s;
+}
+
+/* ============================ Диаграммы на экране ============================ */
+function svgBars(items, opts){
+  opts = opts||{};
+  const W=520, rowH=30, padL=opts.padL||170, padR=54, H=items.length*rowH+12;
+  const max = Math.max(...items.map(i=>i.value), opts.max||0, 1);
+  let b = "";
+  items.forEach((it,i) => {
+    const y = i*rowH+4, w = Math.max(2,(it.value/max)*(W-padL-padR));
+    const lbl = it.label.length>26 ? it.label.slice(0,25)+"…" : it.label;
+    b += `<text x="${padL-9}" y="${y+15}" text-anchor="end" font-size="12" fill="#3D5468">${esc(lbl)}</text>`
+      +  `<rect x="${padL}" y="${y+3}" width="${w}" height="17" rx="3" fill="#${it.color||PAL.azure}"/>`
+      +  `<text x="${padL+w+7}" y="${y+16}" font-size="12" font-weight="600" fill="#0C2233">${esc(it.text!=null?it.text:nf(it.value))}</text>`;
+  });
+  if(opts.target!=null){
+    const x = padL + (opts.target/max)*(W-padL-padR);
+    b += `<line x1="${x}" y1="0" x2="${x}" y2="${H-6}" stroke="#${PAL.crimson}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" role="img">${b}</svg>`;
+}
+
+function svgLine(pts, opts){
+  opts = opts||{};
+  const W=520, H=190, padL=36, padR=12, padT=12, padB=26;
+  const max = Math.max(...pts.map(p=>p.value), 1);
+  const step = pts.length>1 ? (W-padL-padR)/(pts.length-1) : 0;
+  const xy = pts.map((p,i)=>[padL+i*step, padT+(H-padT-padB)*(1-p.value/max)]);
+  let g = "";
+  for(let k=0;k<=4;k++){
+    const y = padT+(H-padT-padB)*k/4, v = Math.round(max*(1-k/4));
+    g += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#EDF2F6"/><text x="${padL-6}" y="${y+4}" text-anchor="end" font-size="10" fill="#8FA6B6">${v}</text>`;
+  }
+  const area = `M${padL},${H-padB} ` + xy.map(p=>`L${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ") + ` L${xy[xy.length-1][0].toFixed(1)},${H-padB} Z`;
+  const line = "M" + xy.map(p=>`${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" L");
+  let lbl = "";
+  const every = Math.ceil(pts.length/12);
+  pts.forEach((p,i)=>{ if(i%every===0) lbl += `<text x="${xy[i][0]}" y="${H-8}" text-anchor="middle" font-size="10" fill="#8FA6B6">${esc(p.label)}</text>`; });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img"><path d="${area}" fill="#0B6FB4" opacity=".10"/>${g}<path d="${line}" fill="none" stroke="#${PAL.azure}" stroke-width="2.2" stroke-linejoin="round"/>${lbl}</svg>`;
+}
+
+function pctColor(p){ return p==null ? PAL.grey : p>=85 ? PAL.green : p>=70 ? PAL.amber : PAL.crimson; }
+
+/* ============================ Вывод на экран ============================ */
+function delta(cur, prev, unit, better){
+  if(prev==null || cur==null || isNaN(prev) || isNaN(cur)) return '<div class="k-dlt flat">нет данных за прошлый месяц</div>';
+  const d = cur - prev;
+  const txt = (d>0?"+":"") + (unit==="pp" ? d.toFixed(1).replace(".",",")+" п.п." : unit==="h" ? d.toFixed(1).replace(".",",")+" ч" : nf(d));
+  if(Math.abs(d) < (unit==="pp"?0.05:unit==="h"?0.05:0.5)) return '<div class="k-dlt flat">без изменений</div>';
+  const good = better==="up" ? d>0 : d<0;
+  return `<div class="k-dlt ${good?"up":"down"}">${txt} к прошлому месяцу</div>`;
+}
+
+function render(cur, prev, cfg){
+  const P = prev;
+  const kpi = [
+    {l:"Всего единичных повреждений", v:nf(cur.total), d:delta(cur.total, P&&P.total, "n", "down")},
+    {l:`Устранено в контрольный срок (${cfg.ctrl} ч)`, v:pf(cur.ctrlPct), d:delta(cur.ctrlPct, P&&P.ctrlPct, "pp", "up"), cls: cur.ctrlPct==null?"":cur.ctrlPct>=85?"":cur.ctrlPct>=70?"warn":"bad"},
+    {l:"Устранено в день подачи (с учётом регламента)", v:pf(cur.dayPct), d:delta(cur.dayPct, P&&P.dayPct, "pp", "up")},
+    {l:`GPON в день подачи при плане ${cfg.plan}%`, v:pf(cur.gponDayPct), d:delta(cur.gponDayPct, P&&P.gponDayPct, "pp", "up"), cls: cur.gponDayPct==null?"":cur.gponDayPct>=cfg.plan?"":cur.gponDayPct>=cfg.plan-7?"warn":"bad"},
+    {l:"Среднее время устранения", v:hf(cur.avgH), d:delta(cur.avgH, P&&P.avgH, "h", "down")},
+    {l:`Длительное устранение (свыше ${cfg.ctrl} ч)`, v:nf(cur.over), d:delta(cur.over, P&&P.over, "n", "down"), cls: cur.over>0?"warn":""},
+    {l:"Абонентов с повторными обращениями (2+)", v:nf(cur.repeatN), d:delta(cur.repeatN, P&&P.repeatN, "n", "down")},
+    {l:`Особый контроль (${cfg.repeat}+ обращения)`, v:nf(cur.criticalN), d:delta(cur.criticalN, P&&P.criticalN, "n", "down"), cls: cur.criticalN>0?"bad":""}
+  ];
+
+  const maxDay = Math.max(...cur.byDay.map(d=>d.total), 1);
+  const strip = cur.byDay.map(d => {
+    const h = Math.max(4, Math.round(d.total/maxDay*104));
+    return `<div class="day${d.dow===0?" off":""}" title="${d.date.getDate()} ${MONTHS[d.date.getMonth()]}: ${d.total} заявок, в срок ${pf(d.ctrlPct)}">
+      <div class="bar" style="height:${h}px;background:#${pctColor(d.ctrlPct)}"></div><div class="dn">${d.date.getDate()}</div></div>`;
+  }).join("");
+
+  const techBars = cur.byTech.slice(0,6).map(t => ({label:t.key, value:t.total, text:nf(t.total)+" · "+pf(t.ctrlPct,0), color:PAL.azure}));
+  const causeBars = cur.byCause.slice(0,8).map(c => ({label:c.key, value:c.total, text:nf(c.total), color:PAL.cyan}));
+  const unitBars = cur.byUnit.slice(0,8).map(u => ({label:u.key, value:u.ctrlPct||0, text:pf(u.ctrlPct,0)+" ("+u.total+")", color:pctColor(u.ctrlPct)}));
+  const bktBars = cur.buckets.map(b => ({label:b.label, value:b.count, text:nf(b.count)+" · "+pf(b.pct,0), color:PAL.ink}));
+  const dayPts = cur.byDay.map(d => ({label:String(d.date.getDate()), value:d.total}));
+  const dayTypeBars = cur.dayType.map(d => ({label:d.key, value:d.total, text:nf(d.total)+" · "+pf(d.pct,0), color:d.key.indexOf("день подачи")>-1?PAL.green:PAL.amber}));
+  const dtypeBars = cur.byDtype.filter(d=>d.total>0).map(d => ({label:d.key, value:d.total, text:nf(d.total)+" · "+pf(d.total/cur.total*100,0), color:PAL.azure}));
+
+  const gponRow = cur.gponDayPct!=null
+    ? svgBars([{label:"Факт", value:cur.gponDayPct, text:pf(cur.gponDayPct), color:pctColor(cur.gponDayPct)},
+               {label:"План", value:cfg.plan, text:pf(cfg.plan,0), color:PAL.grey}], {padL:80, max:100})
+    : '<p class="hint">Технология не распознана — показатель по GPON не рассчитан.</p>';
+
+  const worst = cur.byUnit.filter(u=>u.total>=5).sort((a,b)=>(a.ctrlPct??101)-(b.ctrlPct??101))[0];
+  const topCause = cur.byCause[0];
+
+  const tblUnit = tableHTML(["Участок","Заявок","В срок","% в срок","В день подачи","Ср. время"],
+    cur.byUnit.slice(0,25).map(u => [u.key, nf(u.total), nf(u.ctrlOk), pill(u.ctrlPct), pf(u.dayPct,0), hf(u.avgH)]), [1,2,4,5]);
+  const tblCause = tableHTML(["Причина / шифр","Заявок","Доля","% в срок","Ср. время"],
+    cur.byCause.slice(0,25).map(c => [c.key, nf(c.total), pf(c.total/cur.total*100,1), pill(c.ctrlPct), hf(c.avgH)]), [1,2,4]);
+  const tblOver = tableHTML(["Заявка","Дата регистрации","Технология","Участок","Время устранения"],
+    cur.overdue.slice(0,200).map(r => [r.num||"—", r.reg.toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}), r.tech, r.unit, hf(r.hours)]), [4]);
+  const tblCritical = tableHTML(["Абонент / адрес","Обращений","Даты обращений","Технологии","Причины"],
+    cur.criticalGroups.slice(0,200).map(g => [g.addr, nf(g.count), g.list.map(r=>r.reg.toLocaleDateString("ru-RU")).join(", "),
+      [...new Set(g.list.map(r=>r.tech))].join(", "), [...new Set(g.list.map(r=>r.cause))].join(", ")]), [1]);
+  const tblDtype = tableHTML(["Тип повреждения","Заявок","Доля, %","% в срок","Ср. время"],
+    cur.byDtype.filter(d=>d.total>0).map(d => [d.key, nf(d.total), pf(d.total/cur.total*100,1), pill(d.ctrlPct), hf(d.avgH)]), [1,2,4]);
+
+  const cmp = P ? tableHTML(["Показатель", cur.period, P.period, "Динамика"], [
+    ["Всего повреждений", nf(cur.total), nf(P.total), dTxt(cur.total-P.total, "n")],
+    [`Устранено за ${cfg.ctrl} ч`, pf(cur.ctrlPct), pf(P.ctrlPct), dTxt(cur.ctrlPct-P.ctrlPct, "pp")],
+    ["Устранено в день подачи", pf(cur.dayPct), pf(P.dayPct), dTxt(cur.dayPct-P.dayPct, "pp")],
+    ["GPON в день подачи", pf(cur.gponDayPct), pf(P.gponDayPct), dTxt(cur.gponDayPct-P.gponDayPct, "pp")],
+    ["Среднее время устранения", hf(cur.avgH), hf(P.avgH), dTxt(cur.avgH-P.avgH, "h")],
+    [`Длительное устранение (свыше ${cfg.ctrl} ч)`, nf(cur.over), nf(P.over), dTxt(cur.over-P.over, "n")],
+    ["Переходящие, %", pf(cur.dayType[1].pct), pf(P.dayType[1].pct), dTxt(cur.dayType[1].pct-P.dayType[1].pct, "pp")],
+    ["Абонентов с повторными обращениями (2+)", nf(cur.repeatN), nf(P.repeatN), dTxt(cur.repeatN-P.repeatN, "n")],
+    [`Особый контроль (${cfg.repeat}+)`, nf(cur.criticalN), nf(P.criticalN), dTxt(cur.criticalN-P.criticalN, "n")],
+    ["Среднесуточная нагрузка", cur.perDay?cur.perDay.toFixed(1).replace(".",","):"—", P.perDay?P.perDay.toFixed(1).replace(".",","):"—", dTxt(cur.perDay-P.perDay, "n1")]
+  ], [1,2,3]) : "";
+
+  $("#out").innerHTML = `
+  <section class="card">
+    <h2>Ключевые показатели · ${esc(cur.period)}</h2>
+    <p class="hint">Обработано ${nf(cur.total)} заявок${cur.bad.reg?`, пропущено ${nf(cur.bad.reg)} строк без даты регистрации`:""}${cur.open?`. Без даты устранения: ${nf(cur.open)}`:""}${cur.stray?`. Найдено ${nf(cur.stray)} заявок с датой вне месяца «${esc(cur.period)}» — учтены в общих цифрах, но не повлияли на определение периода отчёта`:""}.</p>
+    <div class="kpis">${kpi.map(k=>`<div class="kpi ${k.cls||""}"><div class="k-lbl">${k.l}</div><div class="k-val num">${k.v}</div>${k.d}</div>`).join("")}</div>
+    <p class="hint" style="margin-top:10px">«Длительное устранение» — заявки дольше ${cfg.ctrl} ч; они формируют простой, который учитывается в показателе «Доступность сети доступа».</p>
+  </section>
+
+  <section class="card">
+    <h2>Лента месяца</h2>
+    <p class="hint">Высота столбца — количество повреждений за день, цвет — доля устранённых в контрольный срок.</p>
+    <div class="strip">${strip}</div>
+    <div class="legend"><span><i style="background:#${PAL.green}"></i>85% и выше</span><span><i style="background:#${PAL.amber}"></i>70–85%</span><span><i style="background:#${PAL.crimson}"></i>ниже 70%</span><span>Красная дата — воскресенье</span></div>
+    <p class="hint" style="margin-top:10px">${cur.peak ? `Пик нагрузки — ${cur.peak.date.getDate()} ${MONTHS[cur.peak.date.getMonth()]}: ${nf(cur.peak.total)} повреждений при среднесуточных ${cur.perDay.toFixed(1).replace(".",",")}.` : ""}</p>
+  </section>
+
+  ${P ? `<section class="card"><h2>Сравнение с предыдущим месяцем</h2><p class="hint">${esc(P.period)} → ${esc(cur.period)}</p>${cmp}</section>` : ""}
+
+  <section class="card">
+    <h2>Диаграммы</h2>
+    <div class="chart-row">
+      <div class="chart-box"><h3>Динамика по дням</h3>${svgLine(dayPts)}
+        <p class="note">Всего ${nf(cur.total)} повреждений за ${dN(cur.workDays)}, в среднем ${cur.perDay?cur.perDay.toFixed(1).replace(".",","):"—"} в сутки.</p></div>
+      <div class="chart-box"><h3>Структура по технологиям</h3>${svgBars(techBars,{padL:130})}
+        <p class="note">Рядом с количеством указана доля устранения в контрольный срок по каждой технологии.</p></div>
+    </div>
+    <div class="chart-row" style="margin-top:20px">
+      <div class="chart-box"><h3>Выполнение норматива по GPON</h3>${gponRow}
+        <p class="note">${cur.gponGap!=null ? (cur.gponGap>=0 ? `Норматив выполнен, запас ${pf(cur.gponGap)}.` : `Норматив не выполнен, отставание ${pf(Math.abs(cur.gponGap))} — это ${zR(Math.ceil(cur.gponN*Math.abs(cur.gponGap)/100))}.`) : "Нет данных по технологии."}</p></div>
+      <div class="chart-box"><h3>Распределение времени устранения</h3>${svgBars(bktBars,{padL:110})}
+        <p class="note">В контрольный срок уложились ${zN(cur.ctrlOk)} из ${nf(cur.ctrlN)}; медиана — ${hf(cur.medH)}.</p></div>
+    </div>
+    <div class="chart-row" style="margin-top:20px">
+      <div class="chart-box"><h3>Топ причин повреждений</h3>${svgBars(causeBars)}
+        <p class="note">${topCause ? `Основная причина — «${esc(topCause.key)}»: ${nf(topCause.total)} ${plural(topCause.total,["случай","случая","случаев"])}, ${pf(topCause.total/cur.total*100)} от общего числа.` : ""}</p></div>
+      <div class="chart-box"><h3>Устранение в срок по участкам</h3>${svgBars(unitBars,{max:100})}
+        <p class="note">${worst ? `Наиболее слабый результат — «${esc(worst.key)}»: ${pf(worst.ctrlPct)} при ${zP(worst.total)}.` : ""}</p></div>
+    </div>
+    <div class="chart-row" style="margin-top:20px">
+      <div class="chart-box"><h3>Переходящие / устранённые в день подачи</h3>${svgBars(dayTypeBars,{padL:170})}
+        <p class="note">Устранено в день подачи ${pf(cur.dayType[0].pct)}, переходит на следующий день ${pf(cur.dayType[1].pct)} — с учётом переноса заявок после ${cfg.cut}:00 и явки, выбранной абонентом.</p></div>
+      <div class="chart-box"><h3>Структура по типу повреждения</h3>${dtypeBars.length ? svgBars(dtypeBars,{padL:170}) : '<p class="hint">Столбец «Тип повреждения» не распознан — укажите его в шаге 2.</p>'}
+        <p class="note">${cur.byDtype.filter(d=>d.total>0).map(d=>`${esc(d.key)} — ${pf(d.total/cur.total*100)}`).join(" · ")}</p></div>
+    </div>
+  </section>
+
+  <section class="card"><h2>Сводная по участкам</h2><div class="tbl-scroll">${tblUnit}</div></section>
+  <section class="card"><h2>Сводная по причинам</h2><div class="tbl-scroll">${tblCause}</div></section>
+  <section class="card"><h2>Сводная по типам повреждений</h2><div class="tbl-scroll">${tblDtype}</div></section>
+  <section class="card"><h2>Длительное устранение${cur.overdue.length>200?" (первые 200)":""}</h2><p class="hint">Заявки дольше ${cfg.ctrl} ч — влияют на показатель «Доступность сети доступа». Всего: ${zN(cur.overdue.length)}.</p><div class="tbl-scroll">${tblOver}</div></section>
+
+  <section class="card">
+    <h2>Особый контроль — ${cfg.repeat}+ обращений от абонента</h2>
+    <p class="hint">Повторно (2 и более раз) обращались ${plAb(cur.repeatN)} — это ${pf(cur.repeatSharePct)} всех заявок. Из них на особом контроле (${cfg.repeat} и более обращений): ${plAb(cur.criticalN)}.</p>
+    ${cur.criticalGroups.length ? `<div class="tbl-scroll">${tblCritical}</div>` : `<p class="hint">Абонентов с ${cfg.repeat} и более обращениями за период не выявлено.</p>`}
+  </section>
+
+  <section class="card">
+    <h2>Готовые файлы</h2>
+    <p class="hint">Презентация собирается в корпоративном стиле, пояснения к каждому слайду — в заметках докладчика. Если PowerPoint не открывает презентацию (старые версии Office, 2003–2007, без пакета совместимости) — используйте отчёт в Word: он открывается в любой версии без ограничений.</p>
+    <div class="actions">
+      <button class="btn-main" id="btnPptx">Скачать презентацию (PPTX)</button>
+      <button class="btn-alt" id="btnWord">Скачать отчёт (Word)</button>
+      <button class="btn-alt" id="btnXlsx">Скачать сводные таблицы (Excel)</button>
+    </div>
+    <div id="expMsg"></div>
+  </section>`;
+
+  $("#btnPptx").addEventListener("click", () => makePptx(cur, P, cfg));
+  $("#btnWord").addEventListener("click", () => makeWordReport(cur, P, cfg));
+  $("#btnXlsx").addEventListener("click", () => makeXlsx(cur, P, cfg));
+}
+
+function dTxt(d, unit){
+  if(d==null || isNaN(d)) return "—";
+  const s = (d>0?"+":"") + (unit==="pp" ? d.toFixed(1).replace(".",",")+" п.п." : unit==="h" ? d.toFixed(1).replace(".",",")+" ч" : unit==="n1" ? d.toFixed(1).replace(".",",") : nf(d));
+  return s;
+}
+function pill(p){
+  if(p==null) return "—";
+  const c = p>=85?"p-ok":p>=70?"p-warn":"p-bad";
+  return `<span class="pill ${c}">${pf(p,1)}</span>`;
+}
+function tableHTML(head, rows, numCols){
+  numCols = numCols||[];
+  const th = head.map((h,i)=>`<th class="${numCols.indexOf(i)>-1?"n":""}">${esc(h)}</th>`).join("");
+  const tb = rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${numCols.indexOf(i)>-1?"n":""}">${String(c).indexOf("<span")===0?c:esc(c)}</td>`).join("")}</tr>`).join("");
+  return `<table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table>`;
+}
+
+/* ============================ Выводы для презентации ============================ */
+function conclusions(cur, P, cfg){
+  const out = [];
+  if(P) out.push(`Объём единичных повреждений — ${nf(cur.total)} (${P.total>cur.total?"снижение":"рост"} на ${nf(Math.abs(cur.total-P.total))} к прошлому месяцу).`);
+  else out.push(`Объём единичных повреждений за период — ${nf(cur.total)}, в среднем ${cur.perDay.toFixed(1).replace(".",",")} в сутки.`);
+
+  if(cur.ctrlPct!=null){
+    const dl = P && P.ctrlPct!=null ? ` (${dTxt(cur.ctrlPct-P.ctrlPct,"pp")})` : "";
+    out.push(`Устранение в контрольный срок ${cfg.ctrl} ч — ${pf(cur.ctrlPct)}${dl}; сверх срока ${zN(cur.over)}.`);
+  }
+  if(cur.gponDayPct!=null){
+    out.push(cur.gponGap>=0
+      ? `Норматив по GPON выполнен: ${pf(cur.gponDayPct)} при плане ${cfg.plan}%.`
+      : `Норматив по GPON не выполнен: ${pf(cur.gponDayPct)} при плане ${cfg.plan}% — не хватает ${zR(Math.ceil(cur.gponN*Math.abs(cur.gponGap)/100))}.`);
+  }
+  const worst = cur.byUnit.filter(u=>u.total>=5).sort((a,b)=>(a.ctrlPct??101)-(b.ctrlPct??101))[0];
+  if(worst && worst.ctrlPct!=null && worst.ctrlPct < 85) out.push(`Зона риска — участок «${worst.key}»: ${pf(worst.ctrlPct)} в срок при ${zP(worst.total)}.`);
+  if(cur.byCause[0] && cur.byCause[0].key !== "Не указано") out.push(`Основная причина — «${cur.byCause[0].key}»: ${pf(cur.byCause[0].total/cur.total*100)} всех повреждений; работа по ней даёт наибольший эффект.`);
+  if(cur.criticalN) out.push(`На особом контроле ${plAb(cur.criticalN)} с ${cfg.repeat} и более обращениями за период — повторный выезд не устраняет проблему окончательно.`);
+  else if(cur.repeatN) out.push(`Повторно обращались ${plAb(cur.repeatN)} (${pf(cur.repeatSharePct)} заявок) — случаев с ${cfg.repeat} и более обращениями не выявлено.`);
+  const topDt = cur.byDtype.filter(d=>d.key!=="Не указано" && d.total>0).sort((a,b)=>b.total-a.total)[0];
+  if(topDt) out.push(`Основной тип повреждения — «${topDt.key}»: ${pf(topDt.total/cur.total*100)} от общего числа (полная разбивка по типам — выше в отчёте).`);
+  if(cur.peak) out.push(`Пик нагрузки — ${cur.peak.date.getDate()} ${MONTHS[cur.peak.date.getMonth()]} (${zN(cur.peak.total)}), в срок устранено ${pf(cur.peak.ctrlPct,0)}.`);
+  if(cur.open) out.push(`${zN(cur.open)} без отметки об устранении — требуется закрытие актом выполненных работ.`);
+  return out.slice(0,9);
+}
+
+/* ============================ Экспорт PPTX ============================ */
+function makePptx(cur, P, cfg){
+  const msg = $("#expMsg");
+  msg.innerHTML = '<div class="msg msg-ok">Собираю презентацию…</div>';
+  const branch = ($("#sBranch").value||"").trim();
+  const slides = [];
+  const W = 13.3;
+
+  const titleBar = (sb, txt, sub) => {
+    sb.text({x:0.6, y:0.35, w:W-1.2, h:0.5, paragraphs:[{text:txt, size:26, bold:true, color:PAL.ink}]});
+    if(sub) sb.text({x:0.6, y:0.87, w:W-1.2, h:0.35, paragraphs:[{text:sub, size:13, color:"5A7285"}]});
+  };
+
+  /* 1. Титул */
+  let sb = makeSlideBuilder();
+  sb.rect({x:0, y:0, w:W, h:7.5, fill:PAL.ink});
+  sb.text({x:0.9, y:2.5, w:W-1.8, h:0.9, paragraphs:[{text:"Анализ единичных повреждений", size:40, bold:true, color:"FFFFFF"}]});
+  sb.text({x:0.9, y:3.45, w:W-1.8, h:0.5, paragraphs:[{text: cur.period + (branch ? " · " + branch : ""), size:20, color:"9EC7E0"}]});
+  sb.text({x:0.9, y:4.3, w:W-1.8, h:0.4, paragraphs:[{text:`Всего повреждений: ${nf(cur.total)}   ·   В срок ${cfg.ctrl} ч: ${pf(cur.ctrlPct)}   ·   В день подачи: ${pf(cur.dayPct)}`, size:14, color:"C9DCE8"}]});
+  sb.notes(`Отчёт за ${cur.periodGen}. В анализ включены только единичные повреждения — ${zR(cur.total)} за ${dN(cur.workDays)}. Контрольный срок устранения — ${cfg.ctrl} часов, план по GPON в день подачи — ${cfg.plan}%. Заявки, поступившие после ${cfg.cut}:00, по регламенту отнесены на следующий рабочий день.`);
+  slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+
+  /* 2. Ключевые показатели */
+  sb = makeSlideBuilder();
+  titleBar(sb, "Ключевые показатели", P ? `${cur.period} в сравнении с ${P.period}` : cur.period);
+  const cards = [
+    {t:"Всего повреждений", v:nf(cur.total), d:P?dTxt(cur.total-P.total,"n"):""},
+    {t:`Устранено за ${cfg.ctrl} ч`, v:pf(cur.ctrlPct), d:P?dTxt(cur.ctrlPct-P.ctrlPct,"pp"):""},
+    {t:"Устранено в день подачи", v:pf(cur.dayPct), d:P?dTxt(cur.dayPct-P.dayPct,"pp"):""},
+    {t:`GPON в день подачи (план ${cfg.plan}%)`, v:pf(cur.gponDayPct), d:P?dTxt(cur.gponDayPct-P.gponDayPct,"pp"):""},
+    {t:"Среднее время устранения", v:hf(cur.avgH), d:P?dTxt(cur.avgH-P.avgH,"h"):""},
+    {t:`Длительное устранение (>${cfg.ctrl} ч)`, v:nf(cur.over), d:P?dTxt(cur.over-P.over,"n"):""}
+  ];
+  cards.forEach((c,i) => {
+    const x = 0.6 + (i%3)*4.08, y = 1.55 + Math.floor(i/3)*2.35;
+    sb.rect({x, y, w:3.85, h:2.05, fill:"F5F8FA", line:PAL.line, rounded:true});
+    sb.text({x:x+0.25, y:y+0.18, w:3.35, h:0.5, paragraphs:[{text:c.t, size:12, bold:true, color:"5A7285"}]});
+    sb.text({x:x+0.25, y:y+0.72, w:3.35, h:0.75, paragraphs:[{text:c.v, size:34, bold:true, color:PAL.ink}]});
+    if(c.d) sb.text({x:x+0.25, y:y+1.5, w:3.35, h:0.35, paragraphs:[{text:c.d + " к прошлому месяцу", size:11, color:"5A7285"}]});
+  });
+  sb.notes(`Начать с объёма: ${nf(cur.total)} единичных повреждений${P?`, ${cur.total>P.total?"больше":"меньше"} прошлого месяца на ${nf(Math.abs(cur.total-P.total))}`:""}. Ключевой показатель — устранение за ${cfg.ctrl} часов: ${pf(cur.ctrlPct)}${P&&P.ctrlPct!=null?`, динамика ${dTxt(cur.ctrlPct-P.ctrlPct,"pp")}`:""}. Отдельно обратить внимание руководства на GPON: ${pf(cur.gponDayPct)} при плане ${cfg.plan}%${cur.gponGap!=null&&cur.gponGap<0?` — отставание ${pf(Math.abs(cur.gponGap))}`:" — норматив выдержан"}. Среднее время устранения ${hf(cur.avgH)}, медиана ${hf(cur.medH)}.`);
+  slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+
+  /* 3. Динамика по дням */
+  sb = makeSlideBuilder();
+  titleBar(sb, "Динамика повреждений по дням", `Среднесуточная нагрузка — ${cur.perDay.toFixed(1).replace(".",",")} заявки`);
+  sb.cols(cur.byDay.map(d=>({label:String(d.date.getDate()), value:d.total, color:PAL.azure})),
+    {x:0.6, y:1.5, w:W-1.2, h:5.0, labelEvery: cur.byDay.length>20?2:1});
+  sb.notes(`График показывает распределение нагрузки внутри месяца.${cur.peak?` Пик — ${cur.peak.date.getDate()} ${MONTHS[cur.peak.date.getMonth()]}: ${nf(cur.peak.total)} ${plural(cur.peak.total,["повреждение","повреждения","повреждений"])}, в срок устранено ${pf(cur.peak.ctrlPct,0)}.`:""} Дни с провалами — воскресенья и праздничные дни. Если пики совпадают с погодными явлениями или плановыми работами, это стоит проговорить отдельно: именно в такие дни падает процент устранения в срок.`);
+  slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+
+  /* 4. Технологии */
+  sb = makeSlideBuilder();
+  titleBar(sb, "Структура по технологиям", "Количество повреждений и доля устранения в контрольный срок");
+  const tt = cur.byTech.slice(0,6);
+  sb.bars(tt.map(t=>({label:t.key, value:t.total, text:nf(t.total), color:PAL.azure})), {x:0.6, y:1.45, w:6.1, h:5.2});
+  sb.bars(tt.map(t=>({label:t.key, value:+(t.ctrlPct||0).toFixed(1), text:pf(t.ctrlPct,1), color:PAL.cyan})), {x:6.9, y:1.45, w:5.8, h:5.2, max:100});
+  sb.notes(`Слева — объём по технологиям, справа — качество устранения по каждой. ${tt[0]?`Основной объём даёт «${tt[0].key}» — ${zR(tt[0].total)} (${pf(tt[0].total/cur.total*100)}).`:""} Сравнение двух диаграмм показывает, где объём не подкреплён качеством: технология с большой долей заявок и низким процентом в срок и есть главный резерв улучшения показателя по участку.`);
+  slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+
+  /* 5. Норматив GPON */
+  sb = makeSlideBuilder();
+  titleBar(sb, "Выполнение норматива по GPON", `Устранение в день подачи при плане ${cfg.plan}%`);
+  sb.bars([
+    {label:"Факт", value:+(cur.gponDayPct||0).toFixed(1), text:pf(cur.gponDayPct,1), color: cur.gponDayPct>=cfg.plan?PAL.green:PAL.crimson},
+    {label:"План", value:cfg.plan, text:pf(cfg.plan,0), color:PAL.grey}
+  ], {x:0.6, y:1.5, w:6.0, h:5.0, max:100, labelW:1.3});
+  const gtxt = [
+    `Заявок по GPON: ${nf(cur.gponN)}`,
+    `Устранено в день подачи: ${nf(cur.gponDayOk)}`,
+    cur.gponGap!=null ? (cur.gponGap>=0 ? `Норматив выполнен, запас ${pf(cur.gponGap)}` : `Отставание ${pf(Math.abs(cur.gponGap))} — это ${nf(Math.ceil(cur.gponN*Math.abs(cur.gponGap)/100))} заявок`) : "",
+    P && P.gponDayPct!=null ? `К прошлому месяцу: ${dTxt(cur.gponDayPct-P.gponDayPct,"pp")}` : ""
+  ].filter(Boolean);
+  sb.rect({x:7.0, y:1.9, w:5.7, h:3.4, fill:"F5F8FA", line:PAL.line, rounded:true});
+  sb.text({x:7.35, y:2.2, w:5.1, h:2.8, paragraphs: gtxt.map(t=>({text:t, size:15, bullet:true, color:PAL.ink}))});
+  sb.notes(`Это показатель, который контролирует руководство. ${cur.gponGap!=null && cur.gponGap<0 ? `Сейчас норматив не выдержан: не хватает примерно ${zR(Math.ceil(cur.gponN*Math.abs(cur.gponGap)/100))}, устранённых в день подачи. Резерв — заявки, поступившие до ${cfg.cut}:00 и перенесённые без объективных причин.` : `Норматив выдержан. Задача — удержать результат при росте нагрузки.`} Напомнить, что заявки после ${cfg.cut}:00 и заявки с датой явки, выбранной абонентом, учтены по регламенту и не считаются нарушением.`);
+  slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+
+  /* 6. Переходящие / устранённые в день подачи */
+  sb = makeSlideBuilder();
+  titleBar(sb, "Переходящие и устранённые в день подачи", "Доля устранения без переноса на следующий день");
+  sb.bars(cur.dayType.map(d=>({label:d.key, value:+(d.pct||0).toFixed(1), text:pf(d.pct,1), color: d.key.indexOf("день подачи")>-1?PAL.green:PAL.amber})),
+    {x:0.6, y:1.5, w:6.0, h:5.0, max:100, labelW:2.6});
+  const dtx = [
+    `Устранено в день подачи: ${nf(cur.dayType[0].total)} (${pf(cur.dayType[0].pct)})`,
+    `Переходящие на следующий день: ${nf(cur.dayType[1].total)} (${pf(cur.dayType[1].pct)})`,
+    P ? `К прошлому месяцу: ${dTxt(cur.dayPct-P.dayPct,"pp")}` : ""
+  ].filter(Boolean);
+  sb.rect({x:7.0, y:1.9, w:5.7, h:2.9, fill:"F5F8FA", line:PAL.line, rounded:true});
+  sb.text({x:7.35, y:2.2, w:5.1, h:2.4, paragraphs: dtx.map(t=>({text:t, size:15, bullet:true, color:PAL.ink}))});
+  sb.notes(`Переходящие заявки — те, что не устранены в день подачи и по регламенту перешли на следующий рабочий день, включая случаи, когда абонент сам выбрал дату явки. Доля устранения в день подачи — ${pf(cur.dayPct)}. Это отдельный от контрольного срока показатель: заявка может быть устранена в день подачи, но за пределами ${cfg.ctrl} часов, и наоборот.`);
+  slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+
+  /* 7. Тип повреждения */
+  const dt = cur.byDtype.filter(d=>d.total>0);
+  if(dt.length){
+    sb = makeSlideBuilder();
+    titleBar(sb, "Структура по типу повреждения", "Количество и доля от общего числа единичных повреждений, %");
+    sb.bars(dt.map(d=>({label:d.key, value:d.total, text:nf(d.total), color:PAL.azure})), {x:0.6, y:1.45, w:6.1, h:5.2});
+    sb.bars(dt.map(d=>({label:d.key, value:+(d.total/cur.total*100).toFixed(1), text:pf(d.total/cur.total*100,1), color:PAL.cyan})), {x:6.9, y:1.45, w:5.8, h:5.2, max:100});
+    const topDt = dt.filter(d=>d.key!=="Не указано").slice().sort((a,b)=>b.total-a.total)[0];
+    const dtList = dt.map(d => `${d.key} — ${pf(d.total/cur.total*100)}`).join("; ");
+    sb.notes(`Доли по типам повреждений: ${dtList}. ${topDt ? `Наибольшая доля — «${topDt.key}»: ${zN(topDt.total)}, ${pf(topDt.total/cur.total*100)} от общего числа.` : "Значительная часть заявок закрыта без указания типа повреждения."} Тип повреждения дополняет разбивку по причинам: причина — конкретный дефект, тип — категория, к которой он относится (кабель, оборудование на стороне абонента, станционное оборудование и так далее).`);
+    slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+  }
+
+  /* 8. Особый контроль по повторным обращениям */
+  sb = makeSlideBuilder();
+  titleBar(sb, "Повторные обращения абонентов", "Абонент считается повторным при 2 и более обращениях за период");
+  const rcards = [
+    {t:"Повторные обращения (2+)", v:nf(cur.repeatN)},
+    {t:"Доля заявок от них", v:pf(cur.repeatSharePct)},
+    {t:`Особый контроль (${cfg.repeat}+ обращения)`, v:nf(cur.criticalN)}
+  ];
+  rcards.forEach((c,i) => {
+    const x = 0.6 + i*4.15, bad = i===2 && cur.criticalN>0;
+    sb.rect({x, y:1.5, w:3.9, h:1.7, fill:bad?"FDF3F2":"F5F8FA", line:bad?"EFC3BE":PAL.line, rounded:true});
+    sb.text({x:x+0.25, y:1.68, w:3.4, h:0.55, paragraphs:[{text:c.t, size:12, bold:true, color:"5A7285"}]});
+    sb.text({x:x+0.25, y:2.2, w:3.4, h:0.75, paragraphs:[{text:c.v, size:30, bold:true, color:PAL.ink}]});
+  });
+  if(cur.criticalGroups.length){
+    const shown = cur.criticalGroups.slice(0,8);
+    const lines = shown.map(g => `${g.addr} — ${g.count} ${plural(g.count,["обращение","обращения","обращений"])} (${g.list.map(r=>r.reg.toLocaleDateString("ru-RU")).join(", ")})`);
+    sb.text({x:0.6, y:3.55, w:W-1.2, h:3.5, paragraphs: lines.map(t=>({text:t, size:12.5, bullet:true, color:PAL.ink}))});
+    if(cur.criticalGroups.length > 8){
+      sb.text({x:0.6, y:7.05, w:W-1.2, h:0.3, paragraphs:[{text:`Показаны первые 8 из ${nf(cur.criticalGroups.length)} — полный список в файле Excel, лист «Повторные обращения».`, size:10.5, italic:true, color:"5A7285"}]});
+    }
+  } else {
+    sb.text({x:0.6, y:3.7, w:W-1.2, h:0.5, paragraphs:[{text:`Абонентов с ${cfg.repeat} и более обращениями за период не выявлено.`, size:14, color:"5A7285"}]});
+  }
+  sb.notes(`${cur.repeatN ? `Повторно обращались ${plAb(cur.repeatN)} — это ${pf(cur.repeatSharePct)} всех заявок.` : "Повторных обращений за период не выявлено."} ${cur.criticalN ? `На особом контроле — ${plAb(cur.criticalN)} с ${cfg.repeat} и более обращениями: по каждому нужно разобраться, почему повреждение не устраняется окончательно с первого раза, и доложить причину отдельно.` : ""} Группировка выполнена по столбцу «${esc(STATE.map.addr||"адрес/абонент")}» — при наличии отдельного номера лицевого счёта точность определения повторных обращений выше.`);
+  slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+
+  /* 9. Распределение времени */
+  sb = makeSlideBuilder();
+  titleBar(sb, "Распределение времени устранения", `Медиана — ${hf(cur.medH)}, максимум — ${hf(cur.maxH)}`);
+  sb.bars(cur.buckets.map(b=>({label:b.label, value:b.count, text:nf(b.count), color:PAL.ink})), {x:0.6, y:1.45, w:W-1.2, h:5.2});
+  sb.notes(`Распределение показывает не средние, а реальную картину: ${zN(cur.ctrlOk)} из ${nf(cur.ctrlN)} закрыты в контрольный срок. Правая часть диаграммы — это заявки с длительным устранением: они формируют простой и напрямую влияют на показатель «Доступность сети доступа». Разбор именно этих ${zR(cur.over)} даёт прямой рост показателя, тогда как ускорение уже быстрых заявок на результат почти не влияет.`);
+  slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+
+  /* 10. Причины */
+  const cs = cur.byCause.slice(0,8);
+  if(cs.length){
+    sb = makeSlideBuilder();
+    titleBar(sb, "Основные причины повреждений", "Топ-8 по количеству заявок");
+    sb.bars(cs.map(c=>({label:c.key.length>34?c.key.slice(0,33)+"…":c.key, value:c.total, text:nf(c.total), color:PAL.cyan})), {x:0.6, y:1.45, w:W-1.2, h:5.2});
+    sb.notes(`${cs[0].key!=="Не указано" ? `Первая причина — «${cs[0].key}»: ${nf(cs[0].total)} ${plural(cs[0].total,["случай","случая","случаев"])}, ${pf(cs[0].total/cur.total*100)} всех повреждений.` : "Часть заявок закрыта без указания причины — это отдельная задача по дисциплине заполнения."} Верхние три позиции обычно дают больше половины объёма, поэтому профилактика по ним (замена проблемных участков кабеля, работа с абонентским оборудованием, переключение на оптику) снижает поток повреждений сильнее, чем общее ускорение бригад.`);
+    slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+  }
+
+  /* 11. Участки */
+  const us = cur.byUnit.filter(u=>u.key!=="Не указано").slice(0,8);
+  if(us.length){
+    sb = makeSlideBuilder();
+    titleBar(sb, "Результаты по участкам", "Доля устранения в контрольный срок, %");
+    sb.bars(us.map(u=>({label:u.key.length>26?u.key.slice(0,25)+"…":u.key, value:+(u.ctrlPct||0).toFixed(1), text:pf(u.ctrlPct,1), color:PAL.azure})), {x:0.6, y:1.45, w:W-1.2, h:5.2, max:100});
+    const w2 = us.slice().sort((a,b)=>(a.ctrlPct??101)-(b.ctrlPct??101))[0];
+    sb.notes(`Сравнение участков в одинаковых условиях. ${w2?`Ниже всех — «${w2.key}»: ${pf(w2.ctrlPct)} при ${zP(w2.total)} и среднем времени ${hf(w2.avgH)}.`:""} Разница между лучшим и худшим участком показывает, что дело не в объёме нагрузки, а в организации выездов и своевременном закрытии актов. По отстающим — адресный разбор просроченных заявок.`);
+    slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+  }
+
+  /* 12. Выводы */
+  sb = makeSlideBuilder();
+  titleBar(sb, "Выводы и задачи", cur.period);
+  const cc = conclusions(cur, P, cfg);
+  sb.text({x:0.75, y:1.6, w:W-1.5, h:5.2, paragraphs: cc.map(t=>({text:t, size:16, bullet:true, color:PAL.ink}))});
+  sb.notes(`Завершающий слайд — то, что руководство запомнит. Проговорить три вещи: текущий уровень показателя, конкретную причину отставания и что именно делается на следующий месяц. Предложить решения по своей зоне: адресный разбор ${nf(cur.over)} ${plural(cur.over,["просроченной заявки","просроченных заявок","просроченных заявок"])}, ускорение переключения проблемных абонентов с меди на оптику, контроль своевременного закрытия актов выполненных работ.`);
+  slides.push({xml:sb.xml(), notesXml:sb.notesXml()});
+
+  const fname = `Анализ_единичных_повреждений_${cur.period.replace(" ","_")}.pptx`;
+  try{
+    const bytes = buildPptx(slides, {title: fname, author: "Анализ единичных повреждений"});
+    downloadBlob(bytes, fname, "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+    msg.innerHTML = `<div class="msg msg-ok">Презентация сохранена: ${esc(fname)}</div>`;
+  }catch(e){
+    msg.innerHTML = `<div class="msg msg-err">Не удалось собрать презентацию: ${esc(e.message)}</div>`;
+  }
+}
+
+
+/* ============================ Экспорт Word (RTF) ============================ */
+function makeWordReport(cur, P, cfg){
+  const msg = $("#expMsg");
+  msg.innerHTML = '<div class="msg msg-ok">Собираю отчёт…</div>';
+  const branch = ($("#sBranch").value||"").trim();
+  const b = makeRtfBuilder();
+
+  /* 1. Титул */
+  b.heading("Анализ единичных повреждений", 1);
+  b.para(cur.period + (branch ? " · " + branch : ""), {size:14, color:3, spaceAfter:4});
+  b.para(`Всего повреждений: ${nf(cur.total)}   ·   В срок ${cfg.ctrl} ч: ${pf(cur.ctrlPct)}   ·   В день подачи: ${pf(cur.dayPct)}`, {size:11, spaceAfter:8});
+  b.para(`Отчёт за ${cur.periodGen}. В анализ включены только единичные повреждения — ${zR(cur.total)} за ${dN(cur.workDays)}. Контрольный срок устранения — ${cfg.ctrl} часов, план по GPON в день подачи — ${cfg.plan}%. Заявки, поступившие после ${cfg.cut}:00, по регламенту отнесены на следующий рабочий день.`, {size:10, italic:true, color:3, spaceAfter:16});
+
+  /* 2. Ключевые показатели */
+  b.heading("Ключевые показатели", 2);
+  const cards = [
+    {t:"Всего повреждений", v:nf(cur.total), d:P?dTxt(cur.total-P.total,"n"):"—"},
+    {t:`Устранено за ${cfg.ctrl} ч`, v:pf(cur.ctrlPct), d:P?dTxt(cur.ctrlPct-P.ctrlPct,"pp"):"—"},
+    {t:"Устранено в день подачи", v:pf(cur.dayPct), d:P?dTxt(cur.dayPct-P.dayPct,"pp"):"—"},
+    {t:`GPON в день подачи (план ${cfg.plan}%)`, v:pf(cur.gponDayPct), d:P?dTxt(cur.gponDayPct-P.gponDayPct,"pp"):"—"},
+    {t:"Среднее время устранения", v:hf(cur.avgH), d:P?dTxt(cur.avgH-P.avgH,"h"):"—"},
+    {t:`Длительное устранение (>${cfg.ctrl} ч)`, v:nf(cur.over), d:P?dTxt(cur.over-P.over,"n"):"—"}
+  ];
+  b.table([["Показатель","Значение","К прошлому месяцу"]].concat(cards.map(c=>[c.t,c.v,c.d])), [3.0,1.5,2.0]);
+  b.para(`«Длительное устранение» — заявки дольше ${cfg.ctrl} ч; они формируют простой, который учитывается в показателе «Доступность сети доступа».`, {size:9.5, italic:true, color:3, spaceAfter:10});
+
+  if(P){
+    b.heading("Сравнение с предыдущим месяцем", 2);
+    b.table([
+      ["Показатель", cur.period, P.period, "Динамика"],
+      ["Всего повреждений", nf(cur.total), nf(P.total), dTxt(cur.total-P.total,"n")],
+      [`Устранено за ${cfg.ctrl} ч, %`, pf(cur.ctrlPct), pf(P.ctrlPct), dTxt(cur.ctrlPct-P.ctrlPct,"pp")],
+      ["Устранено в день подачи, %", pf(cur.dayPct), pf(P.dayPct), dTxt(cur.dayPct-P.dayPct,"pp")],
+      ["GPON в день подачи, %", pf(cur.gponDayPct), pf(P.gponDayPct), dTxt(cur.gponDayPct-P.gponDayPct,"pp")],
+      ["Среднее время устранения", hf(cur.avgH), hf(P.avgH), dTxt(cur.avgH-P.avgH,"h")],
+      [`Длительное устранение (свыше ${cfg.ctrl} ч)`, nf(cur.over), nf(P.over), dTxt(cur.over-P.over,"n")],
+      ["Абонентов с повторными обращениями", nf(cur.repeatN), nf(P.repeatN), dTxt(cur.repeatN-P.repeatN,"n")],
+      [`Особый контроль (${cfg.repeat}+)`, nf(cur.criticalN), nf(P.criticalN), dTxt(cur.criticalN-P.criticalN,"n")]
+    ], [2.6,1.3,1.3,1.3]);
+  }
+
+  /* 3. Динамика по дням */
+  b.heading("Динамика по дням", 2);
+  b.para(`Среднесуточная нагрузка — ${cur.perDay.toFixed(1).replace(".",",")} заявки за ${dN(cur.workDays)}.${cur.peak?` Пик нагрузки — ${cur.peak.date.getDate()} ${MONTHS[cur.peak.date.getMonth()]}: ${nf(cur.peak.total)} ${plural(cur.peak.total,["повреждение","повреждения","повреждений"])}, в срок устранено ${pf(cur.peak.ctrlPct,0)}.`:""} Подробная разбивка по дням — лист «По дням» в файле Excel.`, {size:11, spaceAfter:10});
+
+  /* 4. Технологии */
+  b.heading("Структура по технологиям", 2);
+  b.table([["Технология","Заявок","% в срок"]].concat(cur.byTech.map(t=>[t.key, nf(t.total), pf(t.ctrlPct,1)])), [3.3,1.6,1.6]);
+
+  /* 5. Норматив GPON */
+  b.heading("Выполнение норматива по GPON", 2);
+  const gtxt = [
+    `Заявок по GPON: ${nf(cur.gponN)}`,
+    `Устранено в день подачи: ${nf(cur.gponDayOk)} (${pf(cur.gponDayPct)} при плане ${cfg.plan}%)`,
+    cur.gponGap!=null ? (cur.gponGap>=0 ? `Норматив выполнен, запас ${pf(cur.gponGap)}` : `Отставание ${pf(Math.abs(cur.gponGap))} — это ${nf(Math.ceil(cur.gponN*Math.abs(cur.gponGap)/100))} заявок`) : "",
+    P && P.gponDayPct!=null ? `К прошлому месяцу: ${dTxt(cur.gponDayPct-P.gponDayPct,"pp")}` : ""
+  ].filter(Boolean);
+  b.bulletList(gtxt, {size:11});
+
+  /* 6. Переходящие / устранённые в день подачи */
+  b.heading("Переходящие и устранённые в день подачи", 2);
+  b.table([["Категория","Заявок","Доля, %"]].concat(cur.dayType.map(d=>[d.key, nf(d.total), pf(d.pct,1)])), [3.3,1.6,1.6]);
+
+  /* 7. Тип повреждения */
+  const dt = cur.byDtype.filter(d=>d.total>0);
+  if(dt.length){
+    b.heading("Структура по типу повреждения", 2);
+    b.table([["Тип повреждения","Заявок","Доля, %","% в срок"]].concat(
+      dt.map(d=>[d.key, nf(d.total), pf(d.total/cur.total*100,1), pf(d.ctrlPct,1)])
+    ), [2.9,1.2,1.2,1.2]);
+  }
+
+  /* 8. Повторные обращения */
+  b.heading("Повторные обращения абонентов", 2);
+  b.para(`Повторно (2 и более раз) обращались ${plAb(cur.repeatN)} — это ${pf(cur.repeatSharePct)} всех заявок. На особом контроле (${cfg.repeat} и более обращений): ${plAb(cur.criticalN)}.`, {size:11, spaceAfter:6});
+  if(cur.criticalGroups.length){
+    const shown = cur.criticalGroups.slice(0,30);
+    const lines = shown.map(g => `${g.addr} — ${g.count} ${plural(g.count,["обращение","обращения","обращений"])} (${g.list.map(r=>r.reg.toLocaleDateString("ru-RU")).join(", ")})`);
+    b.bulletList(lines, {size:10});
+    if(cur.criticalGroups.length > 30){
+      b.para(`Показаны первые 30 из ${nf(cur.criticalGroups.length)} — полный список в файле Excel, лист «Повторные обращения».`, {italic:true, size:9.5, color:3, spaceAfter:10});
+    }
+  } else {
+    b.para(`Абонентов с ${cfg.repeat} и более обращениями за период не выявлено.`, {size:11, color:3, spaceAfter:10});
+  }
+
+  /* 9. Распределение времени */
+  b.heading("Распределение времени устранения", 2);
+  b.table([["Интервал","Заявок","Доля, %"]].concat(cur.buckets.map(x=>[x.label, nf(x.count), pf(x.pct,1)])), [3.3,1.6,1.6]);
+
+  /* 10. Причины */
+  const cs = cur.byCause.slice(0,10);
+  if(cs.length){
+    b.heading("Основные причины повреждений", 2);
+    b.table([["Причина","Заявок","Доля, %"]].concat(cs.map(c=>[c.key, nf(c.total), pf(c.total/cur.total*100,1)])), [3.9,1.3,1.3]);
+  }
+
+  /* 11. Участки */
+  const us = cur.byUnit.filter(u=>u.key!=="Не указано").slice(0,10);
+  if(us.length){
+    b.heading("Результаты по участкам", 2);
+    b.table([["Участок","Заявок","% в срок"]].concat(us.map(u=>[u.key, nf(u.total), pf(u.ctrlPct,1)])), [3.5,1.5,1.5]);
+  }
+
+  /* 12. Выводы */
+  b.heading("Выводы и задачи", 2);
+  b.bulletList(conclusions(cur, P, cfg), {size:11});
+
+  const fname = `Отчёт_единичные_повреждения_${cur.period.replace(" ","_")}.rtf`;
+  try{
+    const rtf = buildRtf(b, {title: fname, author: "Анализ единичных повреждений"});
+    downloadBlob(rtf, fname, "application/rtf");
+    msg.innerHTML = `<div class="msg msg-ok">Отчёт сохранён: ${esc(fname)}</div>`;
+  }catch(e){
+    msg.innerHTML = `<div class="msg msg-err">Не удалось собрать отчёт: ${esc(e.message)}</div>`;
+  }
+}
+
+/* ============================ Экспорт Excel ============================ */
+function makeXlsx(cur, P, cfg){
+  const msg = $("#expMsg");
+  const sheets = [];
+  const add = (name, aoa) => { sheets.push({name: name.slice(0,31), rows: aoa}); };
+  const r1 = v => v==null||isNaN(v) ? "" : Math.round(v*10)/10;
+
+  add("Показатели", [
+    ["Показатель", cur.period, P?P.period:"", P?"Динамика":""],
+    ["Всего единичных повреждений", cur.total, P?P.total:"", P?cur.total-P.total:""],
+    ["Устранено", cur.closed, P?P.closed:"", P?cur.closed-P.closed:""],
+    ["Без отметки об устранении", cur.open, P?P.open:"", P?cur.open-P.open:""],
+    [`Устранено в срок ${cfg.ctrl} ч, шт.`, cur.ctrlOk, P?P.ctrlOk:"", P?cur.ctrlOk-P.ctrlOk:""],
+    [`Устранено в срок ${cfg.ctrl} ч, %`, r1(cur.ctrlPct), P?r1(P.ctrlPct):"", P?r1(cur.ctrlPct-P.ctrlPct):""],
+    [`Длительное устранение (свыше ${cfg.ctrl} ч), шт.`, cur.over, P?P.over:"", P?cur.over-P.over:""],
+    ["Устранено в день подачи, %", r1(cur.dayPct), P?r1(P.dayPct):"", P?r1(cur.dayPct-P.dayPct):""],
+    ["Переходящие, %", r1(cur.dayType[1].pct), P?r1(P.dayType[1].pct):"", P?r1(cur.dayType[1].pct-P.dayType[1].pct):""],
+    ["Абонентов с повторными обращениями (2+)", cur.repeatN, P?P.repeatN:"", P?cur.repeatN-P.repeatN:""],
+    ["Доля заявок от повторных абонентов, %", r1(cur.repeatSharePct), P?r1(P.repeatSharePct):"", P?r1(cur.repeatSharePct-P.repeatSharePct):""],
+    [`Особый контроль (${cfg.repeat}+ обращения)`, cur.criticalN, P?P.criticalN:"", P?cur.criticalN-P.criticalN:""],
+    ["GPON в день подачи, %", r1(cur.gponDayPct), P?r1(P.gponDayPct):"", P?r1(cur.gponDayPct-P.gponDayPct):""],
+    [`План по GPON, %`, cfg.plan, cfg.plan, ""],
+    ["Среднее время устранения, ч", r1(cur.avgH), P?r1(P.avgH):"", P?r1(cur.avgH-P.avgH):""],
+    ["Медиана времени устранения, ч", r1(cur.medH), P?r1(P.medH):"", ""],
+    ["Максимальное время, ч", r1(cur.maxH), P?r1(P.maxH):"", ""],
+    ["Дней в периоде", cur.workDays, P?P.workDays:"", ""],
+    ["Среднесуточная нагрузка", r1(cur.perDay), P?r1(P.perDay):"", P?r1(cur.perDay-P.perDay):""],
+    ["Перенесено по регламенту (после "+cfg.cut+":00)", cur.moved, P?P.moved:"", ""]
+  ]);
+
+  const grpSheet = (arr) => [["Значение","Заявок","В срок, шт.","В срок, %","В день подачи, %","Ср. время, ч","Длительное устранение"]]
+    .concat(arr.map(g => [g.key, g.total, g.ctrlOk, r1(g.ctrlPct), r1(g.dayPct), r1(g.avgH), g.over]));
+
+  add("По технологиям", grpSheet(cur.byTech));
+  add("По участкам", grpSheet(cur.byUnit));
+  add("По исполнителям", grpSheet(cur.byExec));
+  add("По причинам", [["Причина","Заявок","Доля, %","В срок, %","Ср. время, ч"]]
+    .concat(cur.byCause.map(c => [c.key, c.total, r1(c.total/cur.total*100), r1(c.ctrlPct), r1(c.avgH)])));
+  add("Тип повреждения", [["Тип повреждения","Заявок","Доля, %","В срок, %","Ср. время, ч"]]
+    .concat(cur.byDtype.filter(d=>d.total>0).map(d => [d.key, d.total, r1(d.total/cur.total*100), r1(d.ctrlPct), r1(d.avgH)])));
+  add("По дням", [["Дата","День недели","Заявок","В срок, шт.","В срок, %","Ср. время, ч"]]
+    .concat(cur.byDay.map(d => [d.date.toLocaleDateString("ru-RU"), ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"][d.dow], d.total, d.ctrlOk, r1(d.ctrlPct), r1(d.avgH)])));
+  add("Время устранения", [["Интервал","Заявок","Доля, %"]].concat(cur.buckets.map(b => [b.label, b.count, r1(b.pct)])));
+  add("Длительное устранение", [["Заявка","Дата регистрации","Дата устранения","Технология","Участок","Исполнитель","Причина","Часов","Адрес"]]
+    .concat(cur.overdue.map(r => [r.num, r.reg.toLocaleString("ru-RU"), r.fix?r.fix.toLocaleString("ru-RU"):"", r.tech, r.unit, r.exec, r.cause, r1(r.hours), r.addr])));
+  add("Повторные обращения", [["Абонент / адрес","Обращений","Особый контроль","Даты обращений","Технологии","Причины"]]
+    .concat(cur.repeatGroups.map(g => [g.addr, g.count, g.count>=cfg.repeat?"Да":"Нет",
+      g.list.map(r=>r.reg.toLocaleString("ru-RU")).join("; "),
+      [...new Set(g.list.map(r=>r.tech))].join(", "), [...new Set(g.list.map(r=>r.cause))].join(", ")])));
+  if(P) add("Сравнение по технологиям", [["Технология", cur.period+" шт.", P.period+" шт.", cur.period+" % в срок", P.period+" % в срок"]]
+    .concat(cur.byTech.map(t => { const p = P.byTech.find(x=>x.key===t.key); return [t.key, t.total, p?p.total:"", r1(t.ctrlPct), p?r1(p.ctrlPct):""]; })));
+
+  const fname = `Сводные_таблицы_повреждения_${cur.period.replace(" ","_")}.xlsx`;
+  try{
+    const bytes = buildXlsx(sheets);
+    downloadBlob(bytes, fname, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    msg.innerHTML = `<div class="msg msg-ok">Файл сохранён: ${esc(fname)}</div>`;
+  }catch(e){
+    msg.innerHTML = `<div class="msg msg-err">Не удалось собрать Excel-файл: ${esc(e.message)}</div>`;
+  }
+}
+
+/* ============================ Связка интерфейса ============================ */
+function bindDrop(dropId, inputId, which, lblId, subId){
+  const drop = $(dropId), input = $(inputId);
+  const handle = file => {
+    if(!file) return;
+    $("#loadMsg").innerHTML = '<div class="msg msg-ok">Читаю файл…</div>';
+    readWorkbook(file).then(d => {
+      STATE[which] = d;
+      drop.classList.add("filled");
+      $(lblId).textContent = file.name;
+      $(subId).textContent = `${nf(d.rows.length)} строк · ${d.headers.length} столбцов · нажмите, чтобы заменить`;
+      $("#loadMsg").innerHTML = "";
+      if(which === "cur"){
+        STATE.map = autoMap(d.headers);
+        renderMap(d.headers);
+        $("#mapCard").classList.remove("hidden");
+        $("#setCard").classList.remove("hidden");
+        const miss = FIELDS.filter(f => f.req && !STATE.map[f.id]).map(f => f.name);
+        if(miss.length) $("#loadMsg").innerHTML = `<div class="msg msg-err">Не удалось определить: ${esc(miss.join(", "))}. Укажите столбцы вручную в шаге 2.</div>`;
+      }
+    }).catch(e => { $("#loadMsg").innerHTML = `<div class="msg msg-err">${esc(e.message)}</div>`; });
+  };
+  input.addEventListener("change", e => handle(e.target.files[0]));
+  ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => handle(e.dataTransfer.files[0]));
+}
+bindDrop("#dropCur", "#fileCur", "cur", "#lblCur", "#subCur");
+bindDrop("#dropPrev", "#filePrev", "prev", "#lblPrev", "#subPrev");
+
+$("#btnCalc").addEventListener("click", () => {
+  const msg = $("#calcMsg");
+  if(!STATE.cur){ msg.innerHTML = '<div class="msg msg-err">Сначала загрузите файл отчётного месяца.</div>'; return; }
+  const miss = FIELDS.filter(f => f.req && !STATE.map[f.id]).map(f => f.name);
+  if(miss.length){ msg.innerHTML = `<div class="msg msg-err">Укажите столбцы: ${esc(miss.join(", "))}.</div>`; return; }
+  const cfg = {
+    ctrl: Math.max(1, +$("#sCtrl").value || 8),
+    plan: Math.max(1, +$("#sPlan").value || 85),
+    cut:  Math.min(23, Math.max(0, +$("#sCut").value || 17)),
+    repeat: Math.max(2, +$("#sRepeat").value || 3),
+    sat:  $("#sSat").checked
+  };
+  try{
+    const cur = analyze(build(STATE.cur, cfg), cfg);
+    if(!cur.total){ msg.innerHTML = '<div class="msg msg-err">Не удалось распознать ни одной даты регистрации. Проверьте выбранный столбец в шаге 2.</div>'; return; }
+    let prev = null;
+    if(STATE.prev){
+      const ph = STATE.prev.headers;
+      const ok = FIELDS.filter(f=>f.req).every(f => ph.indexOf(STATE.map[f.id]) > -1);
+      if(ok){ prev = analyze(build(STATE.prev, cfg), cfg); }
+      else msg.innerHTML = '<div class="msg msg-err">В файле предыдущего месяца другие названия столбцов — сравнение пропущено.</div>';
+    }
+    if(!msg.innerHTML) msg.innerHTML = "";
+    render(cur, prev, cfg);
+    STATE.res = {cur, prev, cfg};
+    $("#out").scrollIntoView({behavior:"smooth", block:"start"});
+  }catch(e){
+    msg.innerHTML = `<div class="msg msg-err">Ошибка расчёта: ${esc(e.message)}</div>`;
+  }
+});
+</script>
+</body>
+</html>
